@@ -15,8 +15,23 @@ Default profile location:
 - Shows and edits known `MetaResources` currencies with friendly labels: Ren, Refund Tokens, Exotics, Red Exotics, Legendary Biomass, Legendary Licence, and Uranium Rod Currency.
 - Allows adding a missing known currency or custom `MetaRow` by name.
 - Loads `Characters.json` and lets you pick a character, filter talents, and edit/add talent `RowName` ranks.
+- Ships with extracted talent catalog data in `data\`, then shows talent display names, trees, max ranks, clamps known ranks, unlocks all character talents, and maxes selected or all character talents.
 - Creates timestamped backups next to the original file before saving.
 - Uses only built-in .NET JSON and Windows Forms APIs.
+
+## Talent Catalog
+
+The app ships with these extracted ICARUS data tables in `data\` so talent rank limits work out of the box:
+
+```text
+data\D_Talents.json
+data\D_TalentTrees.json
+data\D_TalentRanks.json
+```
+
+When a catalog is loaded, known talents show display name, talent tree, and max rank. Applying or saving known talents clamps ranks to the loaded catalog max. `Apply Rank` and `Max Rank Selected` work on one or more selected rows. `Unlock All Talents` and `Max Rank All Talents` only target character/player talent trees; blueprint, workshop, prospect, great-hunt, and creature/pet talent trees are skipped for bulk actions.
+
+If ICARUS updates and the bundled data becomes stale, replace those three files with freshly extracted versions. The app auto-loads bundled files on startup, and the `Catalog...` button can load a different three-file folder manually by selecting its `D_Talents.json` file.
 
 ## Project Layout
 
@@ -26,9 +41,11 @@ Program.cs               App entry point
 MainForm.cs              Main Windows UI
 IcarusProfile.cs         Profile.json load/edit/save logic
 IcarusCharacters.cs      Characters.json load/edit/save logic
+TalentCatalog.cs         Optional ICARUS talent metadata loader
 ProfileFinder.cs         ICARUS profile/characters discovery
 publish.ps1              Release build script
 assets/                  Source image assets
+data/                    Bundled extracted ICARUS talent data tables
 artifacts/               Generated publish output, ignored by Git
 ```
 

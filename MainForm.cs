@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -37,18 +38,26 @@ internal sealed class MainForm : Form
     private readonly Button _browseCharactersButton = new();
     private readonly Button _reloadCharactersButton = new();
     private readonly Button _saveCharactersButton = new();
+    private readonly Button _loadTalentCatalogButton = new();
+    private readonly TextBox _talentDataFolderText = new();
     private readonly ComboBox _characterPicker = new();
     private readonly TextBox _talentFilterText = new();
     private readonly DataGridView _talentsGrid = new();
+    private readonly DataGridViewTextBoxColumn _talentTreeColumn = new();
+    private readonly DataGridViewTextBoxColumn _talentMaxColumn = new();
     private readonly TextBox _talentRowNameText = new();
     private readonly NumericUpDown _talentRankInput = new();
     private readonly Button _applyTalentButton = new();
+    private readonly Button _maxTalentButton = new();
+    private readonly Button _unlockAllTalentsButton = new();
+    private readonly Button _maxAllTalentsButton = new();
     private readonly Label _characterInfoLabel = new();
     private readonly BindingList<TalentRow> _talentRows = new();
 
     private IcarusProfile? _profile;
     private IcarusCharacters? _characters;
     private IcarusCharacter? _selectedCharacter;
+    private TalentCatalog? _talentCatalog;
 
     public MainForm()
     {
@@ -58,7 +67,11 @@ internal sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
 
         BuildLayout();
-        Load += (_, _) => DiscoverProfiles();
+        Load += (_, _) =>
+        {
+            TryLoadDefaultTalentCatalog();
+            DiscoverProfiles();
+        };
     }
 
     private void BuildLayout()
@@ -220,7 +233,6 @@ internal sealed class MainForm : Form
         _profileInfoLabel.Dock = DockStyle.Fill;
         _profileInfoLabel.TextAlign = ContentAlignment.MiddleRight;
         editor.Controls.Add(_profileInfoLabel, 4, 1);
-
         return root;
     }
 
@@ -230,10 +242,12 @@ internal sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 6,
             Padding = new Padding(10)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
@@ -248,7 +262,7 @@ internal sealed class MainForm : Form
         fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
         fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
         fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
-        fileBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        fileBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
         fileBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         root.Controls.Add(fileBar, 0, 0);
 
@@ -264,17 +278,65 @@ internal sealed class MainForm : Form
         _charactersFilePicker.SelectedIndexChanged += (_, _) => LoadSelectedCharactersFile();
         fileBar.Controls.Add(_charactersFilePicker, 0, 1);
 
-        ConfigureButton(_browseCharactersButton, "Browse");
+        ConfigureButton(_browseCharactersButton, "Browse", Color.FromArgb(232, 248, 236));
         _browseCharactersButton.Click += (_, _) => BrowseForCharactersFile();
         fileBar.Controls.Add(_browseCharactersButton, 1, 1);
 
-        ConfigureButton(_reloadCharactersButton, "Reload");
+        ConfigureButton(_reloadCharactersButton, "Reload", Color.FromArgb(255, 246, 204));
         _reloadCharactersButton.Click += (_, _) => LoadSelectedCharactersFile();
         fileBar.Controls.Add(_reloadCharactersButton, 2, 1);
 
-        ConfigureButton(_saveCharactersButton, "Save");
+        ConfigureButton(_saveCharactersButton, "Save", Color.FromArgb(255, 226, 226));
         _saveCharactersButton.Click += (_, _) => SaveCharactersFile();
         fileBar.Controls.Add(_saveCharactersButton, 3, 1);
+
+        TableLayoutPanel catalogBar = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 2,
+            Padding = new Padding(0, 2, 0, 0)
+        };
+        catalogBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        catalogBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        catalogBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+        catalogBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.Controls.Add(catalogBar, 0, 1);
+
+        catalogBar.Controls.Add(new Label
+        {
+            Text = "Talent Data Folder",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.BottomLeft
+        }, 0, 0);
+
+        _talentDataFolderText.Dock = DockStyle.Fill;
+        _talentDataFolderText.ReadOnly = true;
+        catalogBar.Controls.Add(_talentDataFolderText, 0, 1);
+
+        ConfigureButton(_loadTalentCatalogButton, "Browse", Color.FromArgb(232, 248, 236));
+        _loadTalentCatalogButton.Click += (_, _) => LoadTalentCatalog();
+        catalogBar.Controls.Add(_loadTalentCatalogButton, 1, 1);
+
+        TableLayoutPanel bulkBar = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            Padding = new Padding(0, 6, 0, 0)
+        };
+        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
+        root.Controls.Add(bulkBar, 0, 2);
+
+        ConfigureButton(_unlockAllTalentsButton, "Unlock All Talents");
+        _unlockAllTalentsButton.Click += (_, _) => UnlockAllTalents();
+        bulkBar.Controls.Add(_unlockAllTalentsButton, 1, 0);
+
+        ConfigureButton(_maxAllTalentsButton, "Max Rank All Talents");
+        _maxAllTalentsButton.Click += (_, _) => MaxAllTalents();
+        bulkBar.Controls.Add(_maxAllTalentsButton, 2, 0);
 
         TableLayoutPanel characterBar = new()
         {
@@ -288,7 +350,7 @@ internal sealed class MainForm : Form
         characterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
         characterBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         characterBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        root.Controls.Add(characterBar, 0, 1);
+        root.Controls.Add(characterBar, 0, 3);
 
         characterBar.Controls.Add(new Label { Text = "Character", Dock = DockStyle.Fill }, 0, 0);
         characterBar.Controls.Add(new Label { Text = "Filter", Dock = DockStyle.Fill }, 1, 0);
@@ -311,23 +373,43 @@ internal sealed class MainForm : Form
         _talentsGrid.AllowUserToDeleteRows = false;
         _talentsGrid.AutoGenerateColumns = false;
         _talentsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _talentsGrid.MultiSelect = false;
+        _talentsGrid.MultiSelect = true;
         _talentsGrid.DataSource = _talentRows;
         _talentsGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
-            HeaderText = "RowName",
-            DataPropertyName = nameof(TalentRow.RowName),
+            HeaderText = "Talent",
+            DataPropertyName = nameof(TalentRow.DisplayName),
             ReadOnly = true,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
         });
         _talentsGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
+            HeaderText = "RowName",
+            DataPropertyName = nameof(TalentRow.RowName),
+            ReadOnly = true,
+            Width = 220
+        });
+        _talentTreeColumn.HeaderText = "Tree";
+        _talentTreeColumn.DataPropertyName = nameof(TalentRow.TreeName);
+        _talentTreeColumn.ReadOnly = true;
+        _talentTreeColumn.Width = 180;
+        _talentTreeColumn.Visible = false;
+        _talentsGrid.Columns.Add(_talentTreeColumn);
+
+        _talentMaxColumn.HeaderText = "Max";
+        _talentMaxColumn.DataPropertyName = nameof(TalentRow.MaxRankText);
+        _talentMaxColumn.ReadOnly = true;
+        _talentMaxColumn.Width = 70;
+        _talentMaxColumn.Visible = false;
+        _talentsGrid.Columns.Add(_talentMaxColumn);
+        _talentsGrid.Columns.Add(new DataGridViewTextBoxColumn
+        {
             HeaderText = "Rank",
             DataPropertyName = nameof(TalentRow.Rank),
-            Width = 120
+            Width = 80
         });
         _talentsGrid.SelectionChanged += (_, _) => FillTalentEditorFromSelection();
-        root.Controls.Add(_talentsGrid, 0, 2);
+        root.Controls.Add(_talentsGrid, 0, 4);
 
         TableLayoutPanel editor = new()
         {
@@ -337,35 +419,46 @@ internal sealed class MainForm : Form
             Padding = new Padding(0, 10, 0, 0)
         };
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        root.Controls.Add(editor, 0, 3);
+        root.Controls.Add(editor, 0, 5);
 
-        editor.Controls.Add(new Label { Text = "Talent RowName", Dock = DockStyle.Fill }, 0, 0);
+        editor.Controls.Add(new Label { Text = "Selected Talent", Dock = DockStyle.Fill }, 0, 0);
         editor.Controls.Add(new Label { Text = "Rank", Dock = DockStyle.Fill }, 1, 0);
 
         _talentRowNameText.Dock = DockStyle.Fill;
+        _talentRowNameText.ReadOnly = true;
         editor.Controls.Add(_talentRowNameText, 0, 1);
 
         _talentRankInput.Dock = DockStyle.Fill;
         _talentRankInput.Maximum = 99;
         editor.Controls.Add(_talentRankInput, 1, 1);
 
-        ConfigureButton(_applyTalentButton, "Apply");
+        ConfigureButton(_applyTalentButton, "Apply Rank");
         _applyTalentButton.Click += (_, _) => ApplyTalentEdit();
         editor.Controls.Add(_applyTalentButton, 2, 1);
 
+        ConfigureButton(_maxTalentButton, "Max Rank Selected");
+        _maxTalentButton.Click += (_, _) => MaxSelectedTalent();
+        editor.Controls.Add(_maxTalentButton, 3, 1);
+
         return root;
     }
-
     private static void ConfigureButton(Button button, string text)
+    {
+        ConfigureButton(button, text, SystemColors.Control);
+    }
+
+    private static void ConfigureButton(Button button, string text, Color backColor)
     {
         button.Text = text;
         button.Dock = DockStyle.Fill;
         button.Margin = new Padding(6, 0, 0, 0);
+        button.BackColor = backColor;
+        button.UseVisualStyleBackColor = backColor == SystemColors.Control;
     }
 
     private void DiscoverProfiles()
@@ -556,7 +649,13 @@ internal sealed class MainForm : Form
                 continue;
             }
 
-            _talentRows.Add(new TalentRow(talent.RowName, talent.Rank));
+            TalentMetadata? metadata = _talentCatalog?.Find(talent.RowName);
+            _talentRows.Add(new TalentRow(
+                talent.RowName,
+                metadata?.DisplayName ?? talent.RowName,
+                metadata?.TreeName ?? "",
+                metadata?.MaxRank,
+                talent.Rank));
         }
 
         _characterInfoLabel.Text = $"XP {_selectedCharacter.Xp:N0} | {_selectedCharacter.Talents.Count} talents";
@@ -576,12 +675,24 @@ internal sealed class MainForm : Form
 
     private void FillTalentEditorFromSelection()
     {
-        if (_talentsGrid.CurrentRow?.DataBoundItem is not TalentRow row)
+        List<TalentRow> selectedRows = GetSelectedTalentRows();
+        if (selectedRows.Count == 0)
         {
+            _talentRowNameText.Text = "";
+            _talentRankInput.Maximum = 99;
             return;
         }
 
+        if (selectedRows.Count > 1)
+        {
+            _talentRowNameText.Text = $"{selectedRows.Count} talents selected";
+            _talentRankInput.Maximum = 99;
+            return;
+        }
+
+        TalentRow row = selectedRows[0];
         _talentRowNameText.Text = row.RowName;
+        _talentRankInput.Maximum = 99;
         _talentRankInput.Value = Math.Clamp(row.Rank, 0, 99);
     }
 
@@ -631,18 +742,197 @@ internal sealed class MainForm : Form
             return;
         }
 
-        string rowName = _talentRowNameText.Text.Trim();
-        if (rowName.Length == 0)
+        List<TalentRow> selectedRows = GetSelectedTalentRows();
+        if (selectedRows.Count == 0)
         {
-            SetStatus("Talent RowName is required.");
+            SetStatus("Select one or more talents first.");
             return;
         }
 
-        int rank = decimal.ToInt32(_talentRankInput.Value);
-        _selectedCharacter.SetTalent(rowName, rank);
+        int requestedRank = decimal.ToInt32(_talentRankInput.Value);
+        List<string> rowNames = selectedRows.Select(row => row.RowName).ToList();
+        foreach (TalentRow row in selectedRows)
+        {
+            _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, requestedRank));
+        }
+
         RefreshTalentRows();
-        SelectTalentRow(rowName);
-        SetStatus($"Applied {rowName} rank {rank}. Save to write Characters.json.");
+        SelectTalentRows(rowNames);
+        SetStatus($"Applied rank {requestedRank} to {selectedRows.Count:N0} selected talent(s). Save to write Characters.json.");
+    }
+
+    private void MaxSelectedTalent()
+    {
+        if (_selectedCharacter is null)
+        {
+            SetStatus("Load a character first.");
+            return;
+        }
+
+        if (_talentCatalog is null)
+        {
+            SetStatus("Load the talent catalog first to max known talent ranks.");
+            return;
+        }
+
+        List<TalentRow> selectedRows = GetSelectedTalentRows();
+        if (selectedRows.Count == 0)
+        {
+            SetStatus("Select one or more talents first.");
+            return;
+        }
+
+        int changed = 0;
+        List<string> rowNames = [];
+        foreach (TalentRow row in selectedRows)
+        {
+            TalentMetadata? metadata = _talentCatalog.Find(row.RowName);
+            if (metadata is null)
+            {
+                continue;
+            }
+
+            _selectedCharacter.SetTalent(row.RowName, metadata.MaxRank);
+            rowNames.Add(row.RowName);
+            changed++;
+        }
+
+        RefreshTalentRows();
+        SelectTalentRows(rowNames);
+        SetStatus($"Maxed {changed:N0} selected talent(s). Save to write Characters.json.");
+    }
+
+    private void UnlockAllTalents()
+    {
+        if (_selectedCharacter is null)
+        {
+            SetStatus("Load a character first.");
+            return;
+        }
+
+        if (_talentCatalog is null)
+        {
+            SetStatus("Load the talent catalog first to unlock all talents.");
+            return;
+        }
+
+        Dictionary<string, int> existingRanks = _selectedCharacter.Talents
+            .GroupBy(talent => talent.RowName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Rank, StringComparer.OrdinalIgnoreCase);
+
+        int changed = 0;
+        foreach (TalentMetadata metadata in _talentCatalog.CharacterTalents.Where(talent => talent.MaxRank > 0))
+        {
+            int existingRank = existingRanks.TryGetValue(metadata.RowName, out int rank) ? rank : 0;
+            int unlockedRank = Math.Clamp(Math.Max(existingRank, 1), 0, metadata.MaxRank);
+            _selectedCharacter.SetTalent(metadata.RowName, unlockedRank);
+            changed++;
+        }
+
+        RefreshTalentRows();
+        SetStatus($"Unlocked {changed:N0} character talent(s) at rank 1 where needed. Blueprints and creature talents were skipped. Save to write Characters.json.");
+    }
+
+    private void MaxAllTalents()
+    {
+        if (_selectedCharacter is null)
+        {
+            SetStatus("Load a character first.");
+            return;
+        }
+
+        if (_talentCatalog is null)
+        {
+            SetStatus("Load the talent catalog first to max all talents.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentMetadata metadata in _talentCatalog.CharacterTalents.Where(talent => talent.MaxRank > 0))
+        {
+            _selectedCharacter.SetTalent(metadata.RowName, metadata.MaxRank);
+            changed++;
+        }
+
+        RefreshTalentRows();
+        SetStatus($"Maxed {changed:N0} character talent(s). Blueprints and creature talents were skipped. Save to write Characters.json.");
+    }
+
+    private int ClampTalentRank(string rowName, int rank)
+    {
+        TalentMetadata? metadata = _talentCatalog?.Find(rowName);
+        if (metadata is null)
+        {
+            return rank;
+        }
+
+        return Math.Clamp(rank, 0, metadata.MaxRank);
+    }
+
+    private void LoadTalentCatalog()
+    {
+        using FolderBrowserDialog dialog = new()
+        {
+            Description = "Select the folder that contains D_Talents.json, D_TalentTrees.json, and D_TalentRanks.json",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false,
+            SelectedPath = Directory.Exists(_talentDataFolderText.Text) ? _talentDataFolderText.Text : AppContext.BaseDirectory
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        LoadTalentCatalogFromDirectory(dialog.SelectedPath);
+    }
+    private void TryLoadDefaultTalentCatalog()
+    {
+        string? catalogDirectory = TalentCatalog.FindDefaultDirectory();
+        if (catalogDirectory is null)
+        {
+            UpdateTalentCatalogUi();
+            return;
+        }
+
+        LoadTalentCatalogFromDirectory(catalogDirectory, showErrors: false);
+    }
+
+    private void LoadTalentCatalogFromDirectory(string directory, bool showErrors = true)
+    {
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            SetStatus("Select a folder that contains D_Talents.json, D_TalentTrees.json, and D_TalentRanks.json.");
+            return;
+        }
+
+        try
+        {
+            _talentCatalog = TalentCatalog.LoadFromDirectory(directory);
+            _talentDataFolderText.Text = directory;
+            UpdateTalentCatalogUi();
+            RefreshTalentRows();
+            SetStatus($"Loaded {_talentCatalog.Count:N0} metadata rows from {directory}. Bulk actions use character talents only.");
+        }
+        catch (Exception ex)
+        {
+            _talentCatalog = null;
+            _talentDataFolderText.Text = directory;
+            UpdateTalentCatalogUi();
+            if (showErrors)
+            {
+                MessageBox.Show(this, ex.Message, "Could not load talent catalog", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            SetStatus("Talent catalog load failed.");
+        }
+    }
+
+    private void UpdateTalentCatalogUi()
+    {
+        bool loaded = _talentCatalog is not null;
+        _loadTalentCatalogButton.Text = "Browse";
+        _talentTreeColumn.Visible = loaded;
+        _talentMaxColumn.Visible = loaded;
     }
 
     private void SelectResourceRow(string name)
@@ -658,6 +948,45 @@ internal sealed class MainForm : Form
         _resourcesGrid.ClearSelection();
         _resourcesGrid.Rows[index].Selected = true;
         _resourcesGrid.CurrentCell = _resourcesGrid.Rows[index].Cells[0];
+    }
+
+    private List<TalentRow> GetSelectedTalentRows()
+    {
+        List<TalentRow> selectedRows = _talentsGrid.SelectedRows
+            .Cast<DataGridViewRow>()
+            .Select(row => row.DataBoundItem)
+            .OfType<TalentRow>()
+            .GroupBy(row => row.RowName, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+        if (selectedRows.Count == 0 && _talentsGrid.CurrentRow?.DataBoundItem is TalentRow currentRow)
+        {
+            selectedRows.Add(currentRow);
+        }
+
+        return selectedRows;
+    }
+
+    private void SelectTalentRows(IEnumerable<string> rowNames)
+    {
+        HashSet<string> selectedRowNames = new(rowNames, StringComparer.OrdinalIgnoreCase);
+        if (selectedRowNames.Count == 0)
+        {
+            return;
+        }
+
+        _talentsGrid.ClearSelection();
+        foreach (DataGridViewRow gridRow in _talentsGrid.Rows)
+        {
+            if (gridRow.DataBoundItem is not TalentRow talentRow || !selectedRowNames.Contains(talentRow.RowName))
+            {
+                continue;
+            }
+
+            gridRow.Selected = true;
+            _talentsGrid.CurrentCell ??= gridRow.Cells[0];
+        }
     }
 
     private void SelectTalentRow(string rowName)
@@ -714,7 +1043,7 @@ internal sealed class MainForm : Form
             {
                 foreach (TalentRow row in _talentRows)
                 {
-                    _selectedCharacter.SetTalent(row.RowName, row.Rank);
+                    _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, row.Rank));
                 }
             }
 
@@ -766,13 +1095,24 @@ internal sealed class MetaResourceRow
 
 internal sealed class TalentRow
 {
-    public TalentRow(string rowName, int rank)
+    public TalentRow(string rowName, string displayName, string treeName, int? maxRank, int rank)
     {
         RowName = rowName;
+        DisplayName = displayName;
+        TreeName = treeName;
+        MaxRank = maxRank;
         Rank = rank;
     }
 
     public string RowName { get; set; }
+
+    public string DisplayName { get; set; }
+
+    public string TreeName { get; set; }
+
+    public int? MaxRank { get; set; }
+
+    public string MaxRankText => MaxRank?.ToString() ?? "";
 
     public int Rank { get; set; }
 }
