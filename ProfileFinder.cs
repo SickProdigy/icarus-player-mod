@@ -9,6 +9,22 @@ internal static class ProfileFinder
 {
     public static IReadOnlyList<string> FindProfiles()
     {
+        return FindPlayerDataFiles("Profile.json");
+    }
+
+    public static IReadOnlyList<string> FindCharactersFiles()
+    {
+        return FindPlayerDataFiles("Characters.json");
+    }
+
+    public static string GetCharactersPathForProfile(string profilePath)
+    {
+        string directory = Path.GetDirectoryName(profilePath) ?? "";
+        return Path.Combine(directory, "Characters.json");
+    }
+
+    private static IReadOnlyList<string> FindPlayerDataFiles(string fileName)
+    {
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string playerDataPath = Path.Combine(localAppData, "Icarus", "Saved", "PlayerData");
 
@@ -18,7 +34,7 @@ internal static class ProfileFinder
         }
 
         return Directory
-            .EnumerateFiles(playerDataPath, "Profile.json", SearchOption.AllDirectories)
+            .EnumerateFiles(playerDataPath, fileName, SearchOption.AllDirectories)
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
