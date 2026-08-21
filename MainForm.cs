@@ -31,6 +31,7 @@ internal sealed class MainForm : Form
     private readonly NumericUpDown _resourceCountInput = new();
     private readonly Button _applyResourceButton = new();
     private readonly Label _profileInfoLabel = new();
+    private readonly Label _playerDataLabel = new();
     private readonly Label _statusLabel = new();
     private readonly BindingList<MetaResourceRow> _resourceRows = new();
 
@@ -80,18 +81,59 @@ internal sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 4,
             Padding = new Padding(12)
         };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         Controls.Add(root);
+
+        MenuStrip menuStrip = new()
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(0)
+        };
+        ToolStripMenuItem helpMenu = new("Help");
+        ToolStripMenuItem aboutMenuItem = new("About Icarus Profile Mod");
+        aboutMenuItem.Click += (_, _) => ShowAboutDialog();
+        helpMenu.DropDownItems.Add(aboutMenuItem);
+        menuStrip.Items.Add(helpMenu);
+        MainMenuStrip = menuStrip;
+        root.Controls.Add(menuStrip, 0, 0);
+
+        TableLayoutPanel header = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(2, 0, 2, 8)
+        };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.Controls.Add(new Label
+        {
+            Text = "Icarus Player Data Editor",
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            Font = new Font(Font, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(0, 0, 18, 0)
+        }, 0, 0);
+        _playerDataLabel.Text = "Looking for player data...";
+        _playerDataLabel.Dock = DockStyle.Fill;
+        _playerDataLabel.AutoEllipsis = true;
+        _playerDataLabel.ForeColor = SystemColors.GrayText;
+        _playerDataLabel.TextAlign = ContentAlignment.MiddleLeft;
+        header.Controls.Add(_playerDataLabel, 1, 0);
+        root.Controls.Add(header, 0, 1);
 
         TabControl tabs = new()
         {
             Dock = DockStyle.Fill
         };
-        root.Controls.Add(tabs, 0, 0);
+        root.Controls.Add(tabs, 0, 2);
 
         TabPage resourcesTab = new("Profile Resources");
         resourcesTab.Controls.Add(BuildProfileResourcesTab());
@@ -103,7 +145,7 @@ internal sealed class MainForm : Form
 
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
-        root.Controls.Add(_statusLabel, 0, 1);
+        root.Controls.Add(_statusLabel, 0, 3);
     }
 
     private Control BuildProfileResourcesTab()
@@ -115,7 +157,7 @@ internal sealed class MainForm : Form
             RowCount = 3,
             Padding = new Padding(10)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
 
@@ -142,18 +184,19 @@ internal sealed class MainForm : Form
 
         _profilePicker.Dock = DockStyle.Fill;
         _profilePicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        ConfigurePathPicker(_profilePicker);
         _profilePicker.SelectedIndexChanged += (_, _) => LoadSelectedProfile();
         topBar.Controls.Add(_profilePicker, 0, 1);
 
-        ConfigureButton(_browseButton, "Browse");
+        ConfigureFileButton(_browseButton, "Browse", Color.FromArgb(232, 248, 236), _profilePicker);
         _browseButton.Click += (_, _) => BrowseForProfile();
         topBar.Controls.Add(_browseButton, 1, 1);
 
-        ConfigureButton(_reloadButton, "Reload");
+        ConfigureFileButton(_reloadButton, "Reload", Color.FromArgb(255, 246, 204), _profilePicker);
         _reloadButton.Click += (_, _) => LoadSelectedProfile();
         topBar.Controls.Add(_reloadButton, 2, 1);
 
-        ConfigureButton(_saveProfileButton, "Save");
+        ConfigureFileButton(_saveProfileButton, "Save", Color.FromArgb(255, 226, 226), _profilePicker);
         _saveProfileButton.Click += (_, _) => SaveProfile();
         topBar.Controls.Add(_saveProfileButton, 3, 1);
 
@@ -163,6 +206,7 @@ internal sealed class MainForm : Form
         _resourcesGrid.AutoGenerateColumns = false;
         _resourcesGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         _resourcesGrid.MultiSelect = false;
+        ConfigureGrid(_resourcesGrid);
         _resourcesGrid.DataSource = _resourceRows;
         _resourcesGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
@@ -275,18 +319,19 @@ internal sealed class MainForm : Form
 
         _charactersFilePicker.Dock = DockStyle.Fill;
         _charactersFilePicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        ConfigurePathPicker(_charactersFilePicker);
         _charactersFilePicker.SelectedIndexChanged += (_, _) => LoadSelectedCharactersFile();
         fileBar.Controls.Add(_charactersFilePicker, 0, 1);
 
-        ConfigureButton(_browseCharactersButton, "Browse", Color.FromArgb(232, 248, 236));
+        ConfigureFileButton(_browseCharactersButton, "Browse", Color.FromArgb(232, 248, 236), _charactersFilePicker);
         _browseCharactersButton.Click += (_, _) => BrowseForCharactersFile();
         fileBar.Controls.Add(_browseCharactersButton, 1, 1);
 
-        ConfigureButton(_reloadCharactersButton, "Reload", Color.FromArgb(255, 246, 204));
+        ConfigureFileButton(_reloadCharactersButton, "Reload", Color.FromArgb(255, 246, 204), _charactersFilePicker);
         _reloadCharactersButton.Click += (_, _) => LoadSelectedCharactersFile();
         fileBar.Controls.Add(_reloadCharactersButton, 2, 1);
 
-        ConfigureButton(_saveCharactersButton, "Save", Color.FromArgb(255, 226, 226));
+        ConfigureFileButton(_saveCharactersButton, "Save", Color.FromArgb(255, 226, 226), _charactersFilePicker);
         _saveCharactersButton.Click += (_, _) => SaveCharactersFile();
         fileBar.Controls.Add(_saveCharactersButton, 3, 1);
 
@@ -314,7 +359,7 @@ internal sealed class MainForm : Form
         _talentDataFolderText.ReadOnly = true;
         catalogBar.Controls.Add(_talentDataFolderText, 0, 1);
 
-        ConfigureButton(_loadTalentCatalogButton, "Browse", Color.FromArgb(232, 248, 236));
+        ConfigureFileButton(_loadTalentCatalogButton, "Browse", Color.FromArgb(232, 248, 236), _talentDataFolderText);
         _loadTalentCatalogButton.Click += (_, _) => LoadTalentCatalog();
         catalogBar.Controls.Add(_loadTalentCatalogButton, 1, 1);
 
@@ -374,6 +419,7 @@ internal sealed class MainForm : Form
         _talentsGrid.AutoGenerateColumns = false;
         _talentsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         _talentsGrid.MultiSelect = true;
+        ConfigureGrid(_talentsGrid);
         _talentsGrid.DataSource = _talentRows;
         _talentsGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
@@ -461,17 +507,55 @@ internal sealed class MainForm : Form
         button.UseVisualStyleBackColor = backColor == SystemColors.Control;
     }
 
+    private static void ConfigureFileButton(Button button, string text, Color backColor, Control field)
+    {
+        ConfigureButton(button, text, backColor);
+        button.Dock = DockStyle.Top;
+        button.Height = field.PreferredSize.Height;
+    }
+
+    private static void ConfigurePathPicker(ComboBox picker)
+    {
+        picker.FormattingEnabled = true;
+        picker.Format += (_, args) =>
+        {
+            if (args.ListItem is not string path)
+            {
+                return;
+            }
+
+            string? playerFolder = Path.GetFileName(Path.GetDirectoryName(path));
+            args.Value = string.IsNullOrWhiteSpace(playerFolder)
+                ? Path.GetFileName(path)
+                : $"{playerFolder}  /  {Path.GetFileName(path)}";
+        };
+    }
+
+    private static void ConfigureGrid(DataGridView grid)
+    {
+        grid.RowHeadersVisible = false;
+        grid.BorderStyle = BorderStyle.FixedSingle;
+        grid.BackgroundColor = SystemColors.Window;
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 251);
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font(grid.Font, FontStyle.Bold);
+        grid.ColumnHeadersHeight = 34;
+        grid.RowTemplate.Height = 30;
+    }
+
     private void DiscoverProfiles()
     {
         _profilePicker.Items.Clear();
         _charactersFilePicker.Items.Clear();
 
-        foreach (string profilePath in ProfileFinder.FindProfiles())
+        IReadOnlyList<string> profiles = ProfileFinder.FindProfiles();
+        IReadOnlyList<string> charactersFiles = ProfileFinder.FindCharactersFiles();
+
+        foreach (string profilePath in profiles)
         {
             _profilePicker.Items.Add(profilePath);
         }
 
-        foreach (string charactersPath in ProfileFinder.FindCharactersFiles())
+        foreach (string charactersPath in charactersFiles)
         {
             _charactersFilePicker.Items.Add(charactersPath);
         }
@@ -490,6 +574,11 @@ internal sealed class MainForm : Form
         {
             _charactersFilePicker.SelectedIndex = 0;
         }
+
+        string? discoveredFile = profiles.FirstOrDefault() ?? charactersFiles.FirstOrDefault();
+        _playerDataLabel.Text = discoveredFile is null
+            ? "Player data folder not found — use Browse in either editor"
+            : $"Player data: {Path.GetDirectoryName(discoveredFile)}";
     }
 
     private void BrowseForProfile()
@@ -546,6 +635,7 @@ internal sealed class MainForm : Form
         try
         {
             _profile = IcarusProfile.Load(path);
+            UpdatePlayerDataHeader(path);
             RefreshResourceRows();
             _profileInfoLabel.Text = $"User {_profile.UserId}";
             SetStatus($"Loaded {Path.GetFileName(path)}.");
@@ -574,6 +664,7 @@ internal sealed class MainForm : Form
         try
         {
             _characters = IcarusCharacters.Load(path);
+            UpdatePlayerDataHeader(path);
             RefreshCharacterPicker();
             SetStatus($"Loaded {Path.GetFileName(path)}.");
         }
@@ -1061,6 +1152,17 @@ internal sealed class MainForm : Form
     {
         return ResourcePresets.FirstOrDefault(item =>
             string.Equals(item.MetaRow, metaRow, StringComparison.OrdinalIgnoreCase))?.FriendlyName ?? metaRow;
+    }
+
+    private void UpdatePlayerDataHeader(string filePath)
+    {
+        _playerDataLabel.Text = $"Player data: {Path.GetDirectoryName(filePath)}";
+    }
+
+    private void ShowAboutDialog()
+    {
+        using AboutDialog dialog = new();
+        dialog.ShowDialog(this);
     }
 
     private void SetStatus(string message)
