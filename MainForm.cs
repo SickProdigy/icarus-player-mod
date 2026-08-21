@@ -21,6 +21,15 @@ internal sealed class MainForm : Form
         new("Exotic_Uranium", "Uranium Rod Currency"),
     ];
 
+    private static readonly TalentCategory[] RegularTalentCategories =
+    [
+        new("All Talents", null),
+        new("Survival", "Survival"),
+        new("Adventure", "Player_Adventure"),
+        new("Habitation", "Construction"),
+        new("Combat", "Combat")
+    ];
+
     private readonly ComboBox _profilePicker = new();
     private readonly Button _browseButton = new();
     private readonly Button _reloadButton = new();
@@ -42,6 +51,8 @@ internal sealed class MainForm : Form
     private readonly Button _loadTalentCatalogButton = new();
     private readonly TextBox _talentDataFolderText = new();
     private readonly ComboBox _characterPicker = new();
+    private readonly ComboBox _talentCategoryPicker = new();
+    private readonly ComboBox _talentTreePicker = new();
     private readonly TextBox _talentFilterText = new();
     private readonly DataGridView _talentsGrid = new();
     private readonly DataGridViewTextBoxColumn _talentTreeColumn = new();
@@ -50,15 +61,47 @@ internal sealed class MainForm : Form
     private readonly NumericUpDown _talentRankInput = new();
     private readonly Button _applyTalentButton = new();
     private readonly Button _maxTalentButton = new();
-    private readonly Button _unlockAllTalentsButton = new();
     private readonly Button _maxAllTalentsButton = new();
+    private readonly Button _resetAllTalentsButton = new();
     private readonly Label _characterInfoLabel = new();
     private readonly BindingList<TalentRow> _talentRows = new();
+
+    private readonly ComboBox _blueprintCharacterPicker = new();
+    private readonly TextBox _blueprintFilterText = new();
+    private readonly DataGridView _blueprintsGrid = new();
+    private readonly NumericUpDown _blueprintRankInput = new();
+    private readonly Button _applyBlueprintButton = new();
+    private readonly Button _maxAllBlueprintsButton = new();
+    private readonly Button _resetAllBlueprintsButton = new();
+    private readonly Button _saveBlueprintsButton = new();
+    private readonly Label _blueprintInfoLabel = new();
+    private readonly BindingList<TalentRow> _blueprintRows = new();
+
+    private readonly ComboBox _mountsFilePicker = new();
+    private readonly Button _browseMountsButton = new();
+    private readonly Button _reloadMountsButton = new();
+    private readonly Button _saveMountsButton = new();
+    private readonly ComboBox _mountPicker = new();
+    private readonly NumericUpDown _mountLevelInput = new();
+    private readonly Button _applyMountLevelButton = new();
+    private readonly TextBox _creatureTalentFilterText = new();
+    private readonly DataGridView _creatureTalentsGrid = new();
+    private readonly TextBox _creatureTalentRowNameText = new();
+    private readonly NumericUpDown _creatureTalentRankInput = new();
+    private readonly Button _applyCreatureTalentButton = new();
+    private readonly Button _maxCreatureTalentButton = new();
+    private readonly Button _maxAllCreatureTalentsButton = new();
+    private readonly Button _resetCreatureTalentsButton = new();
+    private readonly Label _mountInfoLabel = new();
+    private readonly BindingList<TalentRow> _creatureTalentRows = new();
 
     private IcarusProfile? _profile;
     private IcarusCharacters? _characters;
     private IcarusCharacter? _selectedCharacter;
+    private IcarusMounts? _mounts;
+    private IcarusMount? _selectedMount;
     private TalentCatalog? _talentCatalog;
+    private bool _showSoloTalents;
 
     public MainForm()
     {
@@ -139,9 +182,38 @@ internal sealed class MainForm : Form
         resourcesTab.Controls.Add(BuildProfileResourcesTab());
         tabs.TabPages.Add(resourcesTab);
 
+        Control talentEditor = BuildCharacterTalentsTab();
         TabPage talentsTab = new("Character Talents");
-        talentsTab.Controls.Add(BuildCharacterTalentsTab());
+        talentsTab.Controls.Add(talentEditor);
         tabs.TabPages.Add(talentsTab);
+
+        TabPage soloTalentsTab = new("Solo Talents");
+        tabs.TabPages.Add(soloTalentsTab);
+
+        TabPage blueprintsTab = new("Blueprints");
+        blueprintsTab.Controls.Add(BuildBlueprintsTab());
+        tabs.TabPages.Add(blueprintsTab);
+
+        TabPage mountsTab = new("Mounts");
+        mountsTab.Controls.Add(BuildMountsTab());
+        tabs.TabPages.Add(mountsTab);
+
+        tabs.SelectedIndexChanged += (_, _) =>
+        {
+            if (tabs.SelectedTab != talentsTab && tabs.SelectedTab != soloTalentsTab)
+            {
+                return;
+            }
+
+            _showSoloTalents = tabs.SelectedTab == soloTalentsTab;
+            TabPage destination = _showSoloTalents ? soloTalentsTab : talentsTab;
+            if (talentEditor.Parent != destination)
+            {
+                destination.Controls.Add(talentEditor);
+                talentEditor.Dock = DockStyle.Fill;
+            }
+            RefreshTalentNavigation();
+        };
 
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -291,8 +363,8 @@ internal sealed class MainForm : Form
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
 
@@ -363,31 +435,11 @@ internal sealed class MainForm : Form
         _loadTalentCatalogButton.Click += (_, _) => LoadTalentCatalog();
         catalogBar.Controls.Add(_loadTalentCatalogButton, 1, 1);
 
-        TableLayoutPanel bulkBar = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 3,
-            RowCount = 1,
-            Padding = new Padding(0, 6, 0, 0)
-        };
-        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
-        bulkBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
-        root.Controls.Add(bulkBar, 0, 2);
-
-        ConfigureButton(_unlockAllTalentsButton, "Unlock All Talents");
-        _unlockAllTalentsButton.Click += (_, _) => UnlockAllTalents();
-        bulkBar.Controls.Add(_unlockAllTalentsButton, 1, 0);
-
-        ConfigureButton(_maxAllTalentsButton, "Max Rank All Talents");
-        _maxAllTalentsButton.Click += (_, _) => MaxAllTalents();
-        bulkBar.Controls.Add(_maxAllTalentsButton, 2, 0);
-
         TableLayoutPanel characterBar = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 2,
+            RowCount = 1,
             Padding = new Padding(0, 6, 0, 0)
         };
         characterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
@@ -395,7 +447,7 @@ internal sealed class MainForm : Form
         characterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
         characterBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         characterBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        root.Controls.Add(characterBar, 0, 3);
+        root.Controls.Add(characterBar, 0, 2);
 
         characterBar.Controls.Add(new Label { Text = "Character", Dock = DockStyle.Fill }, 0, 0);
         characterBar.Controls.Add(new Label { Text = "Filter", Dock = DockStyle.Fill }, 1, 0);
@@ -455,6 +507,45 @@ internal sealed class MainForm : Form
             Width = 80
         });
         _talentsGrid.SelectionChanged += (_, _) => FillTalentEditorFromSelection();
+        _talentsGrid.CellEndEdit += (_, args) => CommitGridRank(_talentsGrid, args.RowIndex);
+        TableLayoutPanel navigationBar = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 1,
+            Padding = new Padding(0, 6, 0, 0)
+        };
+        navigationBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
+        navigationBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
+        navigationBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        navigationBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        navigationBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.Controls.Add(navigationBar, 0, 3);
+
+        _talentCategoryPicker.Dock = DockStyle.Fill;
+        _talentCategoryPicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        foreach (TalentCategory category in RegularTalentCategories)
+        {
+            _talentCategoryPicker.Items.Add(category);
+        }
+        _talentCategoryPicker.SelectedIndexChanged += (_, _) => RefreshTalentTrees();
+        navigationBar.Controls.Add(_talentCategoryPicker, 0, 0);
+
+        _talentTreePicker.Dock = DockStyle.Fill;
+        _talentTreePicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        _talentTreePicker.SelectedIndexChanged += (_, _) => RefreshTalentRows();
+        navigationBar.Controls.Add(_talentTreePicker, 1, 0);
+
+        ConfigureButton(_maxAllTalentsButton, "Max Rank All");
+        _maxAllTalentsButton.Click += (_, _) => MaxAllTalents();
+        navigationBar.Controls.Add(_maxAllTalentsButton, 2, 0);
+
+        ConfigureButton(_resetAllTalentsButton, "Reset Ranks");
+        _resetAllTalentsButton.Click += (_, _) => ResetAllTalents();
+        navigationBar.Controls.Add(_resetAllTalentsButton, 3, 0);
+
+        _talentCategoryPicker.SelectedIndex = 0;
+
         root.Controls.Add(_talentsGrid, 0, 4);
 
         TableLayoutPanel editor = new()
@@ -493,6 +584,200 @@ internal sealed class MainForm : Form
 
         return root;
     }
+
+    private Control BuildBlueprintsTab()
+    {
+        TableLayoutPanel root = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Padding = new Padding(10) };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
+
+        TableLayoutPanel header = new() { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2 };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.Controls.Add(header, 0, 0);
+        header.Controls.Add(new Label { Text = "Character", Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft }, 0, 0);
+        header.Controls.Add(new Label { Text = "Filter Blueprints", Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft }, 1, 0);
+
+        _blueprintCharacterPicker.Dock = DockStyle.Fill;
+        _blueprintCharacterPicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        _blueprintCharacterPicker.SelectedIndexChanged += (_, _) => SelectBlueprintCharacter();
+        header.Controls.Add(_blueprintCharacterPicker, 0, 1);
+        _blueprintFilterText.Dock = DockStyle.Fill;
+        _blueprintFilterText.TextChanged += (_, _) => RefreshBlueprintRows();
+        header.Controls.Add(_blueprintFilterText, 1, 1);
+        ConfigureFileButton(_saveBlueprintsButton, "Save", Color.FromArgb(255, 226, 226), _blueprintFilterText);
+        _saveBlueprintsButton.Click += (_, _) => SaveCharactersFile();
+        header.Controls.Add(_saveBlueprintsButton, 2, 1);
+
+        TableLayoutPanel actions = new() { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Padding = new Padding(0, 6, 0, 0) };
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        root.Controls.Add(actions, 0, 1);
+        ConfigureButton(_maxAllBlueprintsButton, "Max Rank All");
+        _maxAllBlueprintsButton.Click += (_, _) => MaxAllBlueprints();
+        actions.Controls.Add(_maxAllBlueprintsButton, 1, 0);
+        ConfigureButton(_resetAllBlueprintsButton, "Reset Ranks");
+        _resetAllBlueprintsButton.Click += (_, _) => ResetAllBlueprints();
+        actions.Controls.Add(_resetAllBlueprintsButton, 2, 0);
+
+        _blueprintsGrid.Dock = DockStyle.Fill;
+        _blueprintsGrid.AllowUserToAddRows = false;
+        _blueprintsGrid.AllowUserToDeleteRows = false;
+        _blueprintsGrid.AutoGenerateColumns = false;
+        _blueprintsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _blueprintsGrid.MultiSelect = true;
+        ConfigureGrid(_blueprintsGrid);
+        _blueprintsGrid.DataSource = _blueprintRows;
+        _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Blueprint", DataPropertyName = nameof(TalentRow.DisplayName), ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+        _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Tier", DataPropertyName = nameof(TalentRow.TreeName), ReadOnly = true, Width = 220 });
+        _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "RowName", DataPropertyName = nameof(TalentRow.RowName), ReadOnly = true, Width = 240 });
+        _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
+        _blueprintsGrid.SelectionChanged += (_, _) => FillBlueprintEditorFromSelection();
+        _blueprintsGrid.CellEndEdit += (_, args) => CommitGridRank(_blueprintsGrid, args.RowIndex);
+        root.Controls.Add(_blueprintsGrid, 0, 2);
+
+        TableLayoutPanel editor = new() { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+        editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        editor.Controls.Add(new Label { Text = "Selected Blueprint", Dock = DockStyle.Fill }, 0, 0);
+        editor.Controls.Add(new Label { Text = "Rank", Dock = DockStyle.Fill }, 1, 0);
+        _blueprintInfoLabel.Dock = DockStyle.Fill;
+        _blueprintInfoLabel.BorderStyle = BorderStyle.Fixed3D;
+        _blueprintInfoLabel.TextAlign = ContentAlignment.MiddleLeft;
+        editor.Controls.Add(_blueprintInfoLabel, 0, 1);
+        _blueprintRankInput.Dock = DockStyle.Fill;
+        _blueprintRankInput.Maximum = 99;
+        editor.Controls.Add(_blueprintRankInput, 1, 1);
+        ConfigureButton(_applyBlueprintButton, "Apply Rank");
+        _applyBlueprintButton.Click += (_, _) => ApplyBlueprintEdit();
+        editor.Controls.Add(_applyBlueprintButton, 2, 1);
+        root.Controls.Add(editor, 0, 3);
+        return root;
+    }
+
+
+    private Control BuildMountsTab()
+    {
+        TableLayoutPanel root = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Padding = new Padding(10) };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 112));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+
+        TableLayoutPanel fileBar = new() { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 2 };
+        fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        fileBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        fileBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+        fileBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.Controls.Add(fileBar, 0, 0);
+        fileBar.Controls.Add(new Label { Text = "Mounts.json", Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft }, 0, 0);
+        _mountsFilePicker.Dock = DockStyle.Fill;
+        _mountsFilePicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        ConfigurePathPicker(_mountsFilePicker);
+        _mountsFilePicker.SelectedIndexChanged += (_, _) => LoadSelectedMountsFile();
+        fileBar.Controls.Add(_mountsFilePicker, 0, 1);
+        ConfigureFileButton(_browseMountsButton, "Browse", Color.FromArgb(232, 248, 236), _mountsFilePicker);
+        _browseMountsButton.Click += (_, _) => BrowseForMountsFile();
+        fileBar.Controls.Add(_browseMountsButton, 1, 1);
+        ConfigureFileButton(_reloadMountsButton, "Reload", Color.FromArgb(255, 246, 204), _mountsFilePicker);
+        _reloadMountsButton.Click += (_, _) => LoadSelectedMountsFile();
+        fileBar.Controls.Add(_reloadMountsButton, 2, 1);
+        ConfigureFileButton(_saveMountsButton, "Save", Color.FromArgb(255, 226, 226), _mountsFilePicker);
+        _saveMountsButton.Click += (_, _) => SaveMountsFile();
+        fileBar.Controls.Add(_saveMountsButton, 3, 1);
+
+        TableLayoutPanel mountBar = new() { Dock = DockStyle.Fill, ColumnCount = 6, RowCount = 4, Padding = new Padding(0, 2, 0, 8) };
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 320));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        mountBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        mountBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        mountBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        mountBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        root.Controls.Add(mountBar, 0, 1);
+        mountBar.Controls.Add(new Label { Text = "Mount", Dock = DockStyle.Fill }, 0, 0);
+        mountBar.Controls.Add(new Label { Text = "Level", Dock = DockStyle.Fill }, 1, 0);
+        mountBar.Controls.Add(new Label { Text = "Filter", Dock = DockStyle.Fill }, 0, 2);
+        _mountPicker.Dock = DockStyle.Fill;
+        _mountPicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        _mountPicker.SelectedIndexChanged += (_, _) => LoadSelectedMount();
+        mountBar.Controls.Add(_mountPicker, 0, 1);
+        _mountLevelInput.Dock = DockStyle.Fill;
+        _mountLevelInput.Maximum = 50;
+        mountBar.Controls.Add(_mountLevelInput, 1, 1);
+        ConfigureButton(_applyMountLevelButton, "Apply");
+        _applyMountLevelButton.Click += (_, _) => ApplyMountLevel();
+        mountBar.Controls.Add(_applyMountLevelButton, 2, 1);
+        _creatureTalentFilterText.Dock = DockStyle.Fill;
+        _creatureTalentFilterText.TextChanged += (_, _) => RefreshCreatureTalentRows();
+        mountBar.Controls.Add(_creatureTalentFilterText, 0, 3);
+        mountBar.SetColumnSpan(_creatureTalentFilterText, 4);
+        ConfigureButton(_maxAllCreatureTalentsButton, "Max Rank All");
+        _maxAllCreatureTalentsButton.Click += (_, _) => MaxAllCreatureTalents();
+        mountBar.Controls.Add(_maxAllCreatureTalentsButton, 4, 3);
+        ConfigureButton(_resetCreatureTalentsButton, "Reset Ranks");
+        _resetCreatureTalentsButton.Click += (_, _) => ResetCreatureTalents();
+        mountBar.Controls.Add(_resetCreatureTalentsButton, 5, 3);
+
+        _creatureTalentsGrid.Dock = DockStyle.Fill;
+        _creatureTalentsGrid.AllowUserToAddRows = false;
+        _creatureTalentsGrid.AllowUserToDeleteRows = false;
+        _creatureTalentsGrid.AutoGenerateColumns = false;
+        _creatureTalentsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _creatureTalentsGrid.MultiSelect = true;
+        ConfigureGrid(_creatureTalentsGrid);
+        _creatureTalentsGrid.DataSource = _creatureTalentRows;
+        _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Talent", DataPropertyName = nameof(TalentRow.DisplayName), ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+        _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "RowName", DataPropertyName = nameof(TalentRow.RowName), ReadOnly = true, Width = 250 });
+        _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Max", DataPropertyName = nameof(TalentRow.MaxRankText), ReadOnly = true, Width = 70 });
+        _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
+        _creatureTalentsGrid.SelectionChanged += (_, _) => FillCreatureTalentEditorFromSelection();
+        _creatureTalentsGrid.CellEndEdit += (_, args) => CommitCreatureGridRank(args.RowIndex);
+        root.Controls.Add(_creatureTalentsGrid, 0, 2);
+
+        TableLayoutPanel editor = new() { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+        editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.Controls.Add(editor, 0, 3);
+        editor.Controls.Add(new Label { Text = "Selected Talent", Dock = DockStyle.Fill }, 0, 0);
+        editor.Controls.Add(new Label { Text = "Rank", Dock = DockStyle.Fill }, 1, 0);
+        _creatureTalentRowNameText.Dock = DockStyle.Fill;
+        _creatureTalentRowNameText.ReadOnly = true;
+        editor.Controls.Add(_creatureTalentRowNameText, 0, 1);
+        _creatureTalentRankInput.Dock = DockStyle.Fill;
+        _creatureTalentRankInput.Maximum = 99;
+        editor.Controls.Add(_creatureTalentRankInput, 1, 1);
+        ConfigureButton(_applyCreatureTalentButton, "Apply Rank");
+        _applyCreatureTalentButton.Click += (_, _) => ApplyCreatureTalentEdit();
+        editor.Controls.Add(_applyCreatureTalentButton, 2, 1);
+        ConfigureButton(_maxCreatureTalentButton, "Max Rank Selected");
+        _maxCreatureTalentButton.Click += (_, _) => MaxSelectedCreatureTalent();
+        editor.Controls.Add(_maxCreatureTalentButton, 3, 1);
+
+        _mountInfoLabel.Dock = DockStyle.Bottom;
+        _mountInfoLabel.AutoEllipsis = true;
+        root.Controls.Add(_mountInfoLabel, 0, 4);
+        return root;
+    }
+
     private static void ConfigureButton(Button button, string text)
     {
         ConfigureButton(button, text, SystemColors.Control);
@@ -546,9 +831,11 @@ internal sealed class MainForm : Form
     {
         _profilePicker.Items.Clear();
         _charactersFilePicker.Items.Clear();
+        _mountsFilePicker.Items.Clear();
 
         IReadOnlyList<string> profiles = ProfileFinder.FindProfiles();
         IReadOnlyList<string> charactersFiles = ProfileFinder.FindCharactersFiles();
+        IReadOnlyList<string> mountsFiles = ProfileFinder.FindMountsFiles();
 
         foreach (string profilePath in profiles)
         {
@@ -558,6 +845,11 @@ internal sealed class MainForm : Form
         foreach (string charactersPath in charactersFiles)
         {
             _charactersFilePicker.Items.Add(charactersPath);
+        }
+
+        foreach (string mountsPath in mountsFiles)
+        {
+            _mountsFilePicker.Items.Add(mountsPath);
         }
 
         if (_profilePicker.Items.Count > 0)
@@ -575,7 +867,12 @@ internal sealed class MainForm : Form
             _charactersFilePicker.SelectedIndex = 0;
         }
 
-        string? discoveredFile = profiles.FirstOrDefault() ?? charactersFiles.FirstOrDefault();
+        if (_mountsFilePicker.Items.Count > 0)
+        {
+            _mountsFilePicker.SelectedIndex = 0;
+        }
+
+        string? discoveredFile = profiles.FirstOrDefault() ?? charactersFiles.FirstOrDefault() ?? mountsFiles.FirstOrDefault();
         _playerDataLabel.Text = discoveredFile is null
             ? "Player data folder not found — use Browse in either editor"
             : $"Player data: {Path.GetDirectoryName(discoveredFile)}";
@@ -617,6 +914,25 @@ internal sealed class MainForm : Form
         _charactersFilePicker.SelectedItem = dialog.FileName;
     }
 
+
+    private void BrowseForMountsFile()
+    {
+        using OpenFileDialog dialog = new()
+        {
+            Title = "Select Icarus Mounts.json",
+            Filter = "Icarus mounts (Mounts.json)|Mounts.json|JSON files (*.json)|*.json|All files (*.*)|*.*",
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        AddComboBoxItem(_mountsFilePicker, dialog.FileName);
+        _mountsFilePicker.SelectedItem = dialog.FileName;
+    }
+
     private static void AddComboBoxItem(ComboBox comboBox, string value)
     {
         if (!comboBox.Items.Cast<string>().Contains(value, StringComparer.OrdinalIgnoreCase))
@@ -645,6 +961,13 @@ internal sealed class MainForm : Form
             {
                 AddComboBoxItem(_charactersFilePicker, charactersPath);
                 _charactersFilePicker.SelectedItem = charactersPath;
+            }
+
+            string mountsPath = ProfileFinder.GetMountsPathForProfile(path);
+            if (File.Exists(mountsPath))
+            {
+                AddComboBoxItem(_mountsFilePicker, mountsPath);
+                _mountsFilePicker.SelectedItem = mountsPath;
             }
         }
         catch (Exception ex)
@@ -675,11 +998,72 @@ internal sealed class MainForm : Form
         }
     }
 
+
+    private void LoadSelectedMountsFile()
+    {
+        if (_mountsFilePicker.SelectedItem is not string path || string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        try
+        {
+            _mounts = IcarusMounts.Load(path);
+            UpdatePlayerDataHeader(path);
+            RefreshMountPicker();
+            SetStatus($"Loaded {Path.GetFileName(path)}.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Could not load mounts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            SetStatus("Mounts load failed.");
+        }
+    }
+
+    private void RefreshMountPicker()
+    {
+        _mountPicker.Items.Clear();
+        _selectedMount = null;
+        _creatureTalentRows.Clear();
+        _mountInfoLabel.Text = "";
+
+        if (_mounts is null)
+        {
+            return;
+        }
+
+        foreach (IcarusMount mount in _mounts.Mounts)
+        {
+            _mountPicker.Items.Add(mount);
+        }
+
+        if (_mountPicker.Items.Count > 0)
+        {
+            _mountPicker.SelectedIndex = 0;
+        }
+        else
+        {
+            _mountInfoLabel.Text = "No station mounts";
+        }
+    }
+
+    private void LoadSelectedMount()
+    {
+        _selectedMount = _mountPicker.SelectedItem as IcarusMount;
+        if (_selectedMount is not null)
+        {
+            _mountLevelInput.Value = Math.Clamp(_selectedMount.Level, 0, 50);
+        }
+        RefreshCreatureTalentRows();
+    }
+
     private void RefreshCharacterPicker()
     {
         _characterPicker.Items.Clear();
+        _blueprintCharacterPicker.Items.Clear();
         _selectedCharacter = null;
         _talentRows.Clear();
+        _blueprintRows.Clear();
 
         if (_characters is null)
         {
@@ -690,6 +1074,7 @@ internal sealed class MainForm : Form
         foreach (IcarusCharacter character in _characters.Characters)
         {
             _characterPicker.Items.Add(character);
+            _blueprintCharacterPicker.Items.Add(character);
         }
 
         if (_characterPicker.Items.Count > 0)
@@ -703,8 +1088,27 @@ internal sealed class MainForm : Form
 
     private void LoadSelectedCharacter()
     {
-        _selectedCharacter = _characterPicker.SelectedItem as IcarusCharacter;
+        SetSelectedCharacter(_characterPicker.SelectedItem as IcarusCharacter);
+    }
+
+    private void SelectBlueprintCharacter()
+    {
+        SetSelectedCharacter(_blueprintCharacterPicker.SelectedItem as IcarusCharacter);
+    }
+
+    private void SetSelectedCharacter(IcarusCharacter? character)
+    {
+        _selectedCharacter = character;
+        if (!ReferenceEquals(_characterPicker.SelectedItem, character))
+        {
+            _characterPicker.SelectedItem = character;
+        }
+        if (!ReferenceEquals(_blueprintCharacterPicker.SelectedItem, character))
+        {
+            _blueprintCharacterPicker.SelectedItem = character;
+        }
         RefreshTalentRows();
+        RefreshBlueprintRows();
     }
 
     private void RefreshResourceRows()
@@ -732,24 +1136,175 @@ internal sealed class MainForm : Form
             return;
         }
 
+        Dictionary<string, int> savedRanks = GetSavedTalentRanks();
         string filter = _talentFilterText.Text.Trim();
-        foreach (TalentEntry talent in _selectedCharacter.Talents)
+        if (_talentCatalog is null)
         {
-            if (filter.Length > 0 && !talent.RowName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            foreach (TalentEntry talent in _selectedCharacter.Talents.Where(talent =>
+                filter.Length == 0 || talent.RowName.Contains(filter, StringComparison.OrdinalIgnoreCase)))
+            {
+                _talentRows.Add(new TalentRow(talent.RowName, talent.RowName, "", null, talent.Rank));
+            }
+            _characterInfoLabel.Text = $"XP {_selectedCharacter.Xp:N0} | {_talentRows.Count} saved rows (catalog unavailable)";
+            return;
+        }
+
+        IEnumerable<TalentMetadata> visibleTalents = GetActiveTalentMetadata();
+        foreach (TalentMetadata metadata in visibleTalents)
+        {
+            if (filter.Length > 0
+                && !metadata.RowName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                && !metadata.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                && !metadata.TreeName.Contains(filter, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            TalentMetadata? metadata = _talentCatalog?.Find(talent.RowName);
             _talentRows.Add(new TalentRow(
-                talent.RowName,
-                metadata?.DisplayName ?? talent.RowName,
-                metadata?.TreeName ?? "",
-                metadata?.MaxRank,
-                talent.Rank));
+                metadata.RowName,
+                metadata.DisplayName,
+                metadata.TreeName,
+                metadata.MaxRank,
+                savedRanks.TryGetValue(metadata.RowName, out int rank) ? rank : 0));
         }
 
-        _characterInfoLabel.Text = $"XP {_selectedCharacter.Xp:N0} | {_selectedCharacter.Talents.Count} talents";
+        string scope = _showSoloTalents ? "Solo" : (_talentCategoryPicker.SelectedItem as TalentCategory)?.DisplayName ?? "Talents";
+        _characterInfoLabel.Text = $"XP {_selectedCharacter.Xp:N0} | {_talentRows.Count} {scope}";
+    }
+
+    private void RefreshTalentNavigation()
+    {
+        _talentCategoryPicker.Enabled = !_showSoloTalents;
+        RefreshTalentTrees();
+    }
+
+    private void RefreshTalentTrees()
+    {
+        _talentTreePicker.Items.Clear();
+        _talentTreePicker.Items.Add(new TalentTreeChoice("All Trees", null));
+
+        if (_talentCatalog is not null)
+        {
+            string? archetype = GetActiveTalentArchetype();
+            foreach (TalentTreeChoice tree in _talentCatalog.CharacterTalents
+                .Where(talent => archetype is null
+                    ? !string.Equals(talent.TreeArchetype, "Solo", StringComparison.OrdinalIgnoreCase)
+                    : string.Equals(talent.TreeArchetype, archetype, StringComparison.OrdinalIgnoreCase))
+                .GroupBy(talent => talent.TreeRowName, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new TalentTreeChoice(group.First().TreeName, group.Key))
+                .OrderBy(tree => tree.DisplayName, StringComparer.OrdinalIgnoreCase))
+            {
+                _talentTreePicker.Items.Add(tree);
+            }
+        }
+
+        _talentTreePicker.SelectedIndex = 0;
+    }
+
+    private string? GetActiveTalentArchetype()
+    {
+        return _showSoloTalents
+            ? "Solo"
+            : (_talentCategoryPicker.SelectedItem as TalentCategory)?.Archetype;
+    }
+
+    private IEnumerable<TalentMetadata> GetActiveTalentMetadata()
+    {
+        if (_talentCatalog is null)
+        {
+            return Array.Empty<TalentMetadata>();
+        }
+
+        string? archetype = GetActiveTalentArchetype();
+        string? treeRowName = (_talentTreePicker.SelectedItem as TalentTreeChoice)?.RowName;
+        return _talentCatalog.CharacterTalents.Where(talent =>
+            (archetype is null
+                ? !string.Equals(talent.TreeArchetype, "Solo", StringComparison.OrdinalIgnoreCase)
+                : string.Equals(talent.TreeArchetype, archetype, StringComparison.OrdinalIgnoreCase))
+            && (treeRowName is null || string.Equals(talent.TreeRowName, treeRowName, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private Dictionary<string, int> GetSavedTalentRanks()
+    {
+        return _selectedCharacter?.Talents
+            .GroupBy(talent => talent.RowName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Rank, StringComparer.OrdinalIgnoreCase)
+            ?? new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void RefreshBlueprintRows()
+    {
+        _blueprintRows.Clear();
+        if (_selectedCharacter is null || _talentCatalog is null)
+        {
+            return;
+        }
+
+        Dictionary<string, int> savedRanks = GetSavedTalentRanks();
+        string filter = _blueprintFilterText.Text.Trim();
+        foreach (TalentMetadata metadata in _talentCatalog.Blueprints)
+        {
+            if (filter.Length > 0
+                && !metadata.RowName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                && !metadata.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                && !metadata.TreeName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            _blueprintRows.Add(new TalentRow(
+                metadata.RowName,
+                metadata.DisplayName,
+                metadata.TreeName,
+                metadata.MaxRank,
+                savedRanks.TryGetValue(metadata.RowName, out int rank) ? rank : 0));
+        }
+    }
+
+
+    private void RefreshCreatureTalentRows()
+    {
+        _creatureTalentRows.Clear();
+        if (_selectedMount is null)
+        {
+            _mountInfoLabel.Text = "";
+            return;
+        }
+
+        if (_talentCatalog is null)
+        {
+            _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.MountType} | catalog unavailable";
+            foreach (TalentEntry talent in _selectedMount.Talents)
+            {
+                _creatureTalentRows.Add(new TalentRow(talent.RowName, talent.RowName, "", null, talent.Rank));
+            }
+            return;
+        }
+
+        Dictionary<string, int> savedRanks = _selectedMount.Talents
+            .GroupBy(talent => talent.RowName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Rank, StringComparer.OrdinalIgnoreCase);
+        string filter = _creatureTalentFilterText.Text.Trim();
+        string treeRowName = _selectedMount.CreatureTreeRowName;
+        foreach (TalentMetadata metadata in _talentCatalog.CreatureTalents.Where(talent =>
+            string.Equals(talent.TreeRowName, treeRowName, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (filter.Length > 0
+                && !metadata.RowName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                && !metadata.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            _creatureTalentRows.Add(new TalentRow(
+                metadata.RowName,
+                metadata.DisplayName,
+                metadata.TreeName,
+                metadata.MaxRank,
+                savedRanks.TryGetValue(metadata.RowName, out int rank) ? rank : 0));
+        }
+
+        _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.MountType} | {_selectedMount.AiSetupRowName} | XP {_selectedMount.Experience:N0} | HP {_selectedMount.CurrentHealth?.ToString() ?? "?"} | {_creatureTalentRows.Count} {treeRowName} talents";
     }
 
     private void FillEditorFromSelection()
@@ -785,6 +1340,274 @@ internal sealed class MainForm : Form
         _talentRowNameText.Text = row.RowName;
         _talentRankInput.Maximum = 99;
         _talentRankInput.Value = Math.Clamp(row.Rank, 0, 99);
+    }
+
+    private void FillBlueprintEditorFromSelection()
+    {
+        List<TalentRow> selectedRows = GetSelectedBlueprintRows();
+        if (selectedRows.Count == 0)
+        {
+            _blueprintInfoLabel.Text = "";
+            return;
+        }
+
+        if (selectedRows.Count > 1)
+        {
+            _blueprintInfoLabel.Text = $"{selectedRows.Count} blueprints selected";
+            return;
+        }
+
+        TalentRow row = selectedRows[0];
+        _blueprintInfoLabel.Text = row.RowName;
+        _blueprintRankInput.Value = Math.Clamp(row.Rank, 0, 99);
+    }
+
+    private void CommitGridRank(DataGridView grid, int rowIndex)
+    {
+        if (_selectedCharacter is null || rowIndex < 0 || rowIndex >= grid.Rows.Count)
+        {
+            return;
+        }
+
+        if (grid.Rows[rowIndex].DataBoundItem is TalentRow row)
+        {
+            _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, row.Rank));
+        }
+    }
+
+    private List<TalentRow> GetSelectedBlueprintRows()
+    {
+        List<TalentRow> rows = _blueprintsGrid.SelectedRows
+            .Cast<DataGridViewRow>()
+            .Select(row => row.DataBoundItem)
+            .OfType<TalentRow>()
+            .GroupBy(row => row.RowName, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+        if (rows.Count == 0 && _blueprintsGrid.CurrentRow?.DataBoundItem is TalentRow current)
+        {
+            rows.Add(current);
+        }
+        return rows;
+    }
+
+    private void ApplyBlueprintEdit()
+    {
+        if (_selectedCharacter is null)
+        {
+            SetStatus("Load a character first.");
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedBlueprintRows();
+        if (rows.Count == 0)
+        {
+            SetStatus("Select one or more blueprints first.");
+            return;
+        }
+
+        int rank = decimal.ToInt32(_blueprintRankInput.Value);
+        foreach (TalentRow row in rows)
+        {
+            _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, rank));
+        }
+        RefreshBlueprintRows();
+        SetStatus($"Applied rank {rank} to {rows.Count:N0} blueprint(s). Save to write Characters.json.");
+    }
+
+    private void MaxAllBlueprints()
+    {
+        if (_selectedCharacter is null || _talentCatalog is null)
+        {
+            SetStatus("Load a character and talent catalog first.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentMetadata metadata in _talentCatalog.Blueprints.Where(blueprint => blueprint.MaxRank > 0))
+        {
+            _selectedCharacter.SetTalent(metadata.RowName, metadata.MaxRank);
+            changed++;
+        }
+        RefreshBlueprintRows();
+        SetStatus($"Maxed {changed:N0} blueprints. Save to write Characters.json.");
+    }
+
+    private void ResetAllBlueprints()
+    {
+        if (_selectedCharacter is null || _talentCatalog is null)
+        {
+            SetStatus("Load a character and talent catalog first.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentMetadata metadata in _talentCatalog.Blueprints)
+        {
+            _selectedCharacter.SetTalent(metadata.RowName, 0);
+            changed++;
+        }
+        RefreshBlueprintRows();
+        SetStatus($"Reset {changed:N0} blueprint rank(s) to 0. Save to write Characters.json.");
+    }
+
+
+    private void FillCreatureTalentEditorFromSelection()
+    {
+        List<TalentRow> selectedRows = GetSelectedCreatureTalentRows();
+        if (selectedRows.Count == 0)
+        {
+            _creatureTalentRowNameText.Text = "";
+            return;
+        }
+
+        if (selectedRows.Count > 1)
+        {
+            _creatureTalentRowNameText.Text = $"{selectedRows.Count} talents selected";
+            return;
+        }
+
+        TalentRow row = selectedRows[0];
+        _creatureTalentRowNameText.Text = row.RowName;
+        _creatureTalentRankInput.Value = Math.Clamp(row.Rank, 0, 99);
+    }
+
+    private void CommitCreatureGridRank(int rowIndex)
+    {
+        if (_selectedMount is null || rowIndex < 0 || rowIndex >= _creatureTalentsGrid.Rows.Count)
+        {
+            return;
+        }
+
+        if (_creatureTalentsGrid.Rows[rowIndex].DataBoundItem is TalentRow row)
+        {
+            _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, row.Rank));
+        }
+    }
+
+    private List<TalentRow> GetSelectedCreatureTalentRows()
+    {
+        List<TalentRow> rows = _creatureTalentsGrid.SelectedRows
+            .Cast<DataGridViewRow>()
+            .Select(row => row.DataBoundItem)
+            .OfType<TalentRow>()
+            .GroupBy(row => row.RowName, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+        if (rows.Count == 0 && _creatureTalentsGrid.CurrentRow?.DataBoundItem is TalentRow current)
+        {
+            rows.Add(current);
+        }
+        return rows;
+    }
+
+    private void ApplyMountLevel()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a mount first.");
+            return;
+        }
+
+        int level = decimal.ToInt32(_mountLevelInput.Value);
+        string mountName = _selectedMount.Name;
+        _selectedMount.Level = level;
+        RefreshCreatureTalentRows();
+        SetStatus($"Applied level {level} to {mountName}. Save to write Mounts.json.");
+    }
+
+    private void ApplyCreatureTalentEdit()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a mount first.");
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedCreatureTalentRows();
+        if (rows.Count == 0)
+        {
+            SetStatus("Select one or more creature talents first.");
+            return;
+        }
+
+        int rank = decimal.ToInt32(_creatureTalentRankInput.Value);
+        foreach (TalentRow row in rows)
+        {
+            _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, rank));
+        }
+        RefreshCreatureTalentRows();
+        SetStatus($"Applied rank {rank} to {rows.Count:N0} creature talent(s). Save to write Mounts.json.");
+    }
+
+    private void MaxSelectedCreatureTalent()
+    {
+        if (_selectedMount is null || _talentCatalog is null)
+        {
+            SetStatus("Load a mount and talent catalog first.");
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedCreatureTalentRows();
+        int changed = 0;
+        foreach (TalentRow row in rows)
+        {
+            TalentMetadata? metadata = _talentCatalog.Find(row.RowName);
+            if (metadata is null)
+            {
+                continue;
+            }
+            _selectedMount.SetTalent(row.RowName, metadata.MaxRank);
+            changed++;
+        }
+        RefreshCreatureTalentRows();
+        SetStatus($"Maxed {changed:N0} selected creature talent(s). Save to write Mounts.json.");
+    }
+
+    private void MaxAllCreatureTalents()
+    {
+        if (_selectedMount is null || _talentCatalog is null)
+        {
+            SetStatus("Load a mount and talent catalog first.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentMetadata metadata in _talentCatalog.CreatureTalents.Where(talent =>
+            string.Equals(talent.TreeRowName, _selectedMount.CreatureTreeRowName, StringComparison.OrdinalIgnoreCase)
+            && talent.MaxRank > 0))
+        {
+            _selectedMount.SetTalent(metadata.RowName, metadata.MaxRank);
+            changed++;
+        }
+        RefreshCreatureTalentRows();
+        SetStatus($"Maxed {changed:N0} creature talent(s). Save to write Mounts.json.");
+    }
+
+    private void ResetCreatureTalents()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a mount first.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentEntry talent in _selectedMount.Talents.ToList())
+        {
+            _selectedMount.SetTalent(talent.RowName, 0);
+            changed++;
+        }
+        RefreshCreatureTalentRows();
+        SetStatus($"Reset {changed:N0} creature talent(s). Save to write Mounts.json.");
+    }
+
+    private int ClampCreatureTalentRank(string rowName, int rank)
+    {
+        TalentMetadata? metadata = _talentCatalog?.Find(rowName);
+        return metadata is null ? Math.Clamp(rank, 0, 99) : Math.Clamp(rank, 0, metadata.MaxRank);
     }
 
     private void ApplySelectedPreset()
@@ -893,7 +1716,7 @@ internal sealed class MainForm : Form
         SetStatus($"Maxed {changed:N0} selected talent(s). Save to write Characters.json.");
     }
 
-    private void UnlockAllTalents()
+    private void ResetAllTalents()
     {
         if (_selectedCharacter is null)
         {
@@ -903,25 +1726,19 @@ internal sealed class MainForm : Form
 
         if (_talentCatalog is null)
         {
-            SetStatus("Load the talent catalog first to unlock all talents.");
+            SetStatus("Load the talent catalog first to reset known talents.");
             return;
         }
 
-        Dictionary<string, int> existingRanks = _selectedCharacter.Talents
-            .GroupBy(talent => talent.RowName, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First().Rank, StringComparer.OrdinalIgnoreCase);
-
         int changed = 0;
-        foreach (TalentMetadata metadata in _talentCatalog.CharacterTalents.Where(talent => talent.MaxRank > 0))
+        foreach (TalentMetadata metadata in GetActiveTalentMetadata())
         {
-            int existingRank = existingRanks.TryGetValue(metadata.RowName, out int rank) ? rank : 0;
-            int unlockedRank = Math.Clamp(Math.Max(existingRank, 1), 0, metadata.MaxRank);
-            _selectedCharacter.SetTalent(metadata.RowName, unlockedRank);
+            _selectedCharacter.SetTalent(metadata.RowName, 0);
             changed++;
         }
 
         RefreshTalentRows();
-        SetStatus($"Unlocked {changed:N0} character talent(s) at rank 1 where needed. Blueprints and creature talents were skipped. Save to write Characters.json.");
+        SetStatus($"Reset {changed:N0} talent rank(s) in the active view to 0. Save to write Characters.json.");
     }
 
     private void MaxAllTalents()
@@ -939,14 +1756,14 @@ internal sealed class MainForm : Form
         }
 
         int changed = 0;
-        foreach (TalentMetadata metadata in _talentCatalog.CharacterTalents.Where(talent => talent.MaxRank > 0))
+        foreach (TalentMetadata metadata in GetActiveTalentMetadata().Where(talent => talent.MaxRank > 0))
         {
             _selectedCharacter.SetTalent(metadata.RowName, metadata.MaxRank);
             changed++;
         }
 
         RefreshTalentRows();
-        SetStatus($"Maxed {changed:N0} character talent(s). Blueprints and creature talents were skipped. Save to write Characters.json.");
+        SetStatus($"Maxed {changed:N0} talent(s) in the active view. Save to write Characters.json.");
     }
 
     private int ClampTalentRank(string rowName, int rank)
@@ -1002,8 +1819,10 @@ internal sealed class MainForm : Form
             _talentCatalog = TalentCatalog.LoadFromDirectory(directory);
             _talentDataFolderText.Text = directory;
             UpdateTalentCatalogUi();
-            RefreshTalentRows();
-            SetStatus($"Loaded {_talentCatalog.Count:N0} metadata rows from {directory}. Bulk actions use character talents only.");
+            RefreshTalentNavigation();
+            RefreshBlueprintRows();
+            RefreshCreatureTalentRows();
+            SetStatus($"Loaded {_talentCatalog.Count:N0} metadata rows from {directory}.");
         }
         catch (Exception ex)
         {
@@ -1095,6 +1914,36 @@ internal sealed class MainForm : Form
         _talentsGrid.CurrentCell = _talentsGrid.Rows[index].Cells[0];
     }
 
+
+    private void SaveMountsFile()
+    {
+        if (_mounts is null)
+        {
+            SetStatus("Load Mounts.json first.");
+            return;
+        }
+
+        try
+        {
+            _creatureTalentsGrid.EndEdit();
+            if (_selectedMount is not null)
+            {
+                foreach (TalentRow row in _creatureTalentRows)
+                {
+                    _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, row.Rank));
+                }
+            }
+
+            string backupPath = _mounts.SaveWithBackup();
+            SetStatus($"Saved Mounts.json. Backup: {backupPath}");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Could not save mounts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            SetStatus("Mounts save failed.");
+        }
+    }
+
     private void SaveProfile()
     {
         if (_profile is null)
@@ -1130,9 +1979,15 @@ internal sealed class MainForm : Form
 
         try
         {
+            _talentsGrid.EndEdit();
+            _blueprintsGrid.EndEdit();
             if (_selectedCharacter is not null)
             {
                 foreach (TalentRow row in _talentRows)
+                {
+                    _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, row.Rank));
+                }
+                foreach (TalentRow row in _blueprintRows)
                 {
                     _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, row.Rank));
                 }
@@ -1177,6 +2032,16 @@ internal sealed record ResourcePreset(string MetaRow, string FriendlyName)
     {
         return $"{FriendlyName} ({MetaRow})";
     }
+}
+
+internal sealed record TalentCategory(string DisplayName, string? Archetype)
+{
+    public override string ToString() => DisplayName;
+}
+
+internal sealed record TalentTreeChoice(string DisplayName, string? RowName)
+{
+    public override string ToString() => DisplayName;
 }
 
 internal sealed class MetaResourceRow

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 
 namespace IcarusProfileMod;
 
@@ -65,7 +66,8 @@ internal sealed class IcarusCharacters
 
         JsonSerializerOptions options = new()
         {
-            WriteIndented = true
+            WriteIndented = true,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
         };
 
         if (_root[WrapperKey] is not JsonArray characterStrings)

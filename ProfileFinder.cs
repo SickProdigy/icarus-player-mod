@@ -17,10 +17,21 @@ internal static class ProfileFinder
         return FindPlayerDataFiles("Characters.json");
     }
 
+    public static IReadOnlyList<string> FindMountsFiles()
+    {
+        return FindPlayerDataFiles("Mounts.json");
+    }
+
     public static string GetCharactersPathForProfile(string profilePath)
     {
         string directory = Path.GetDirectoryName(profilePath) ?? "";
         return Path.Combine(directory, "Characters.json");
+    }
+
+    public static string GetMountsPathForProfile(string profilePath)
+    {
+        string directory = Path.GetDirectoryName(profilePath) ?? "";
+        return Path.Combine(directory, "Mounts.json");
     }
 
     private static IReadOnlyList<string> FindPlayerDataFiles(string fileName)

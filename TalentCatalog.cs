@@ -34,6 +34,12 @@ internal sealed class TalentCatalog
 
     public IEnumerable<TalentMetadata> CharacterTalents => Talents.Where(talent => talent.IsCharacterTalent);
 
+    public IEnumerable<TalentMetadata> Blueprints => Talents.Where(talent =>
+        talent.TreeArchetype.StartsWith("Blueprint_", StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<TalentMetadata> CreatureTalents => Talents.Where(talent =>
+        talent.TreeRowName.StartsWith("Creature_", StringComparison.OrdinalIgnoreCase));
+
     public static TalentCatalog LoadFromDirectory(string directory)
     {
         string talentsPath = System.IO.Path.Combine(directory, "D_Talents.json");
@@ -262,3 +268,4 @@ internal sealed record TalentMetadata(
     string TalentType,
     int MaxRank,
     bool IsCharacterTalent);
+
