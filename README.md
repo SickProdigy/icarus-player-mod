@@ -12,8 +12,8 @@ Default profile location:
 
 - Auto-discovers ICARUS profile files in `%LOCALAPPDATA%\Icarus\Saved\PlayerData`.
 - Lets you browse to a specific `Profile.json` manually.
-- Shows and edits `MetaResources` values such as `Credits`, `Refund`, `Exotic1`, `Biomass`, and `Licence`.
-- Allows adding a missing resource by name.
+- Shows and edits known `MetaResources` currencies with friendly labels: Ren, Refund Tokens, Exotics, Red Exotics, Legendary Biomass, Legendary Licence, and Uranium Rod Currency.
+- Allows adding a missing known currency or custom `MetaRow` by name.
 - Creates `Profile.backup-yyyyMMdd-HHmmss.json` next to the original file before saving.
 - Uses only built-in .NET JSON and Windows Forms APIs.
 
@@ -66,3 +66,4 @@ dotnet publish .\IcarusProfileMod.csproj -c Release -r win-x64 --self-contained 
 Close ICARUS before saving changes. Steam Cloud may overwrite local files if the game or Steam sync is active while editing.
 
 Backups are created automatically, but keep an extra copy of `Profile.json` before experimenting with new edits.
+

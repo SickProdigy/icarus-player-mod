@@ -9,11 +9,23 @@ namespace IcarusProfileMod;
 
 internal sealed class MainForm : Form
 {
+    private static readonly ResourcePreset[] ResourcePresets =
+    [
+        new("Credits", "Ren"),
+        new("Refund", "Refund Tokens"),
+        new("Exotic1", "Exotics"),
+        new("Exotic_Red", "Red Exotics"),
+        new("Biomass", "Legendary Biomass"),
+        new("Licence", "Legendary Licence"),
+        new("Exotic_Uranium", "Uranium Rod Currency"),
+    ];
+
     private readonly ComboBox _profilePicker = new();
     private readonly Button _browseButton = new();
     private readonly Button _reloadButton = new();
     private readonly Button _saveButton = new();
     private readonly DataGridView _resourcesGrid = new();
+    private readonly ComboBox _resourcePresetPicker = new();
     private readonly TextBox _resourceNameText = new();
     private readonly NumericUpDown _resourceCountInput = new();
     private readonly Button _applyResourceButton = new();
@@ -26,8 +38,8 @@ internal sealed class MainForm : Form
     public MainForm()
     {
         Text = "Icarus Profile Mod";
-        MinimumSize = new Size(820, 560);
-        Size = new Size(940, 640);
+        MinimumSize = new Size(900, 560);
+        Size = new Size(980, 640);
         StartPosition = FormStartPosition.CenterScreen;
 
         BuildLayout();
@@ -98,9 +110,16 @@ internal sealed class MainForm : Form
         _resourcesGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
             HeaderText = "Resource",
-            DataPropertyName = nameof(MetaResourceRow.Name),
+            DataPropertyName = nameof(MetaResourceRow.DisplayName),
             ReadOnly = true,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+        });
+        _resourcesGrid.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            HeaderText = "MetaRow",
+            DataPropertyName = nameof(MetaResourceRow.Name),
+            ReadOnly = true,
+            Width = 180
         });
         _resourcesGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
@@ -114,10 +133,11 @@ internal sealed class MainForm : Form
         TableLayoutPanel editor = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
+            ColumnCount = 5,
             RowCount = 2,
             Padding = new Padding(0, 10, 0, 0)
         };
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
@@ -126,24 +146,36 @@ internal sealed class MainForm : Form
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         root.Controls.Add(editor, 0, 2);
 
-        editor.Controls.Add(new Label { Text = "Resource name", Dock = DockStyle.Fill }, 0, 0);
-        editor.Controls.Add(new Label { Text = "Count", Dock = DockStyle.Fill }, 1, 0);
+        editor.Controls.Add(new Label { Text = "Preset", Dock = DockStyle.Fill }, 0, 0);
+        editor.Controls.Add(new Label { Text = "MetaRow", Dock = DockStyle.Fill }, 1, 0);
+        editor.Controls.Add(new Label { Text = "Count", Dock = DockStyle.Fill }, 2, 0);
+
+        _resourcePresetPicker.Dock = DockStyle.Fill;
+        _resourcePresetPicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        _resourcePresetPicker.Items.Add("Custom");
+        foreach (ResourcePreset preset in ResourcePresets)
+        {
+            _resourcePresetPicker.Items.Add(preset);
+        }
+        _resourcePresetPicker.SelectedIndex = 0;
+        _resourcePresetPicker.SelectedIndexChanged += (_, _) => ApplySelectedPreset();
+        editor.Controls.Add(_resourcePresetPicker, 0, 1);
 
         _resourceNameText.Dock = DockStyle.Fill;
-        editor.Controls.Add(_resourceNameText, 0, 1);
+        editor.Controls.Add(_resourceNameText, 1, 1);
 
         _resourceCountInput.Dock = DockStyle.Fill;
         _resourceCountInput.Maximum = int.MaxValue;
         _resourceCountInput.ThousandsSeparator = true;
-        editor.Controls.Add(_resourceCountInput, 1, 1);
+        editor.Controls.Add(_resourceCountInput, 2, 1);
 
         ConfigureButton(_applyResourceButton, "Apply");
         _applyResourceButton.Click += (_, _) => ApplyResourceEdit();
-        editor.Controls.Add(_applyResourceButton, 2, 1);
+        editor.Controls.Add(_applyResourceButton, 3, 1);
 
         _profileInfoLabel.Dock = DockStyle.Fill;
         _profileInfoLabel.TextAlign = ContentAlignment.MiddleRight;
-        editor.Controls.Add(_profileInfoLabel, 3, 1);
+        editor.Controls.Add(_profileInfoLabel, 4, 1);
 
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -230,7 +262,7 @@ internal sealed class MainForm : Form
 
         foreach (MetaResource resource in _profile.MetaResources)
         {
-            _resourceRows.Add(new MetaResourceRow(resource.Name, resource.Count));
+            _resourceRows.Add(new MetaResourceRow(resource.Name, GetFriendlyName(resource.Name), resource.Count));
         }
     }
 
@@ -241,8 +273,25 @@ internal sealed class MainForm : Form
             return;
         }
 
+        SelectPreset(row.Name);
         _resourceNameText.Text = row.Name;
         _resourceCountInput.Value = Math.Clamp(row.Count, 0, int.MaxValue);
+    }
+
+    private void ApplySelectedPreset()
+    {
+        if (_resourcePresetPicker.SelectedItem is ResourcePreset preset)
+        {
+            _resourceNameText.Text = preset.MetaRow;
+        }
+    }
+
+    private void SelectPreset(string metaRow)
+    {
+        ResourcePreset? preset = ResourcePresets.FirstOrDefault(item =>
+            string.Equals(item.MetaRow, metaRow, StringComparison.OrdinalIgnoreCase));
+
+        _resourcePresetPicker.SelectedItem = preset is null ? "Custom" : preset;
     }
 
     private void ApplyResourceEdit()
@@ -256,7 +305,7 @@ internal sealed class MainForm : Form
         string name = _resourceNameText.Text.Trim();
         if (name.Length == 0)
         {
-            SetStatus("Resource name is required.");
+            SetStatus("MetaRow is required.");
             return;
         }
 
@@ -274,7 +323,7 @@ internal sealed class MainForm : Form
             _resourcesGrid.CurrentCell = _resourcesGrid.Rows[index].Cells[0];
         }
 
-        SetStatus($"Applied {name} = {count:N0}. Save to write Profile.json.");
+        SetStatus($"Applied {GetFriendlyName(name)} ({name}) = {count:N0}. Save to write Profile.json.");
     }
 
     private void SaveProfile()
@@ -302,21 +351,38 @@ internal sealed class MainForm : Form
         }
     }
 
+    private static string GetFriendlyName(string metaRow)
+    {
+        return ResourcePresets.FirstOrDefault(item =>
+            string.Equals(item.MetaRow, metaRow, StringComparison.OrdinalIgnoreCase))?.FriendlyName ?? metaRow;
+    }
+
     private void SetStatus(string message)
     {
         _statusLabel.Text = message;
     }
 }
 
+internal sealed record ResourcePreset(string MetaRow, string FriendlyName)
+{
+    public override string ToString()
+    {
+        return $"{FriendlyName} ({MetaRow})";
+    }
+}
+
 internal sealed class MetaResourceRow
 {
-    public MetaResourceRow(string name, int count)
+    public MetaResourceRow(string name, string displayName, int count)
     {
         Name = name;
+        DisplayName = displayName;
         Count = count;
     }
 
     public string Name { get; set; }
+
+    public string DisplayName { get; set; }
 
     public int Count { get; set; }
 }
