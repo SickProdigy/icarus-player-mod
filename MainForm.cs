@@ -59,7 +59,7 @@ internal sealed class MainForm : Form
     private readonly DataGridViewTextBoxColumn _talentMaxColumn = new();
     private readonly TextBox _talentRowNameText = new();
     private readonly NumericUpDown _talentRankInput = new();
-    private readonly Button _applyTalentButton = new();
+    private readonly Button _resetSelectedTalentButton = new();
     private readonly Button _maxTalentButton = new();
     private readonly Button _maxAllTalentsButton = new();
     private readonly Button _resetAllTalentsButton = new();
@@ -70,7 +70,8 @@ internal sealed class MainForm : Form
     private readonly TextBox _blueprintFilterText = new();
     private readonly DataGridView _blueprintsGrid = new();
     private readonly NumericUpDown _blueprintRankInput = new();
-    private readonly Button _applyBlueprintButton = new();
+    private readonly Button _resetSelectedBlueprintButton = new();
+    private readonly Button _maxSelectedBlueprintButton = new();
     private readonly Button _maxAllBlueprintsButton = new();
     private readonly Button _resetAllBlueprintsButton = new();
     private readonly Button _saveBlueprintsButton = new();
@@ -80,16 +81,19 @@ internal sealed class MainForm : Form
     private readonly ComboBox _mountsFilePicker = new();
     private readonly Button _browseMountsButton = new();
     private readonly Button _reloadMountsButton = new();
+    private readonly Button _injectMountButton = new();
     private readonly Button _saveMountsButton = new();
     private readonly ComboBox _mountPicker = new();
     private readonly NumericUpDown _mountLevelInput = new();
-    private readonly Button _applyMountLevelButton = new();
+    private readonly Button _maxMountLevelButton = new();
     private readonly TextBox _creatureTalentFilterText = new();
     private readonly DataGridView _creatureTalentsGrid = new();
     private readonly TextBox _creatureTalentRowNameText = new();
     private readonly NumericUpDown _creatureTalentRankInput = new();
-    private readonly Button _applyCreatureTalentButton = new();
+    private bool _loadingMountSelection;
+    private bool _updatingCreatureTalentEditor;
     private readonly Button _maxCreatureTalentButton = new();
+    private readonly Button _resetSelectedCreatureTalentButton = new();
     private readonly Button _maxAllCreatureTalentsButton = new();
     private readonly Button _resetCreatureTalentsButton = new();
     private readonly Label _mountInfoLabel = new();
@@ -102,6 +106,8 @@ internal sealed class MainForm : Form
     private IcarusMount? _selectedMount;
     private TalentCatalog? _talentCatalog;
     private bool _showSoloTalents;
+    private bool _updatingTalentEditor;
+    private bool _updatingBlueprintEditor;
 
     public MainForm()
     {
@@ -540,7 +546,7 @@ internal sealed class MainForm : Form
         _maxAllTalentsButton.Click += (_, _) => MaxAllTalents();
         navigationBar.Controls.Add(_maxAllTalentsButton, 2, 0);
 
-        ConfigureButton(_resetAllTalentsButton, "Reset Ranks");
+        ConfigureButton(_resetAllTalentsButton, "Reset All Ranks");
         _resetAllTalentsButton.Click += (_, _) => ResetAllTalents();
         navigationBar.Controls.Add(_resetAllTalentsButton, 3, 0);
 
@@ -574,9 +580,10 @@ internal sealed class MainForm : Form
         _talentRankInput.Maximum = 99;
         editor.Controls.Add(_talentRankInput, 1, 1);
 
-        ConfigureButton(_applyTalentButton, "Apply Rank");
-        _applyTalentButton.Click += (_, _) => ApplyTalentEdit();
-        editor.Controls.Add(_applyTalentButton, 2, 1);
+        _talentRankInput.ValueChanged += (_, _) => UpdateSelectedTalentRankFromInput();
+        ConfigureButton(_resetSelectedTalentButton, "Reset Rank");
+        _resetSelectedTalentButton.Click += (_, _) => ResetSelectedTalents();
+        editor.Controls.Add(_resetSelectedTalentButton, 2, 1);
 
         ConfigureButton(_maxTalentButton, "Max Rank Selected");
         _maxTalentButton.Click += (_, _) => MaxSelectedTalent();
@@ -622,7 +629,7 @@ internal sealed class MainForm : Form
         ConfigureButton(_maxAllBlueprintsButton, "Max Rank All");
         _maxAllBlueprintsButton.Click += (_, _) => MaxAllBlueprints();
         actions.Controls.Add(_maxAllBlueprintsButton, 1, 0);
-        ConfigureButton(_resetAllBlueprintsButton, "Reset Ranks");
+        ConfigureButton(_resetAllBlueprintsButton, "Reset All Ranks");
         _resetAllBlueprintsButton.Click += (_, _) => ResetAllBlueprints();
         actions.Controls.Add(_resetAllBlueprintsButton, 2, 0);
 
@@ -642,10 +649,11 @@ internal sealed class MainForm : Form
         _blueprintsGrid.CellEndEdit += (_, args) => CommitGridRank(_blueprintsGrid, args.RowIndex);
         root.Controls.Add(_blueprintsGrid, 0, 2);
 
-        TableLayoutPanel editor = new() { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
+        TableLayoutPanel editor = new() { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         editor.Controls.Add(new Label { Text = "Selected Blueprint", Dock = DockStyle.Fill }, 0, 0);
@@ -656,10 +664,14 @@ internal sealed class MainForm : Form
         editor.Controls.Add(_blueprintInfoLabel, 0, 1);
         _blueprintRankInput.Dock = DockStyle.Fill;
         _blueprintRankInput.Maximum = 99;
+        _blueprintRankInput.ValueChanged += (_, _) => UpdateSelectedBlueprintRankFromInput();
         editor.Controls.Add(_blueprintRankInput, 1, 1);
-        ConfigureButton(_applyBlueprintButton, "Apply Rank");
-        _applyBlueprintButton.Click += (_, _) => ApplyBlueprintEdit();
-        editor.Controls.Add(_applyBlueprintButton, 2, 1);
+        ConfigureButton(_resetSelectedBlueprintButton, "Reset Rank");
+        _resetSelectedBlueprintButton.Click += (_, _) => ResetSelectedBlueprints();
+        editor.Controls.Add(_resetSelectedBlueprintButton, 2, 1);
+        ConfigureButton(_maxSelectedBlueprintButton, "Max Rank Selected");
+        _maxSelectedBlueprintButton.Click += (_, _) => MaxSelectedBlueprints();
+        editor.Controls.Add(_maxSelectedBlueprintButton, 3, 1);
         root.Controls.Add(editor, 0, 3);
         return root;
     }
@@ -697,10 +709,11 @@ internal sealed class MainForm : Form
         _saveMountsButton.Click += (_, _) => SaveMountsFile();
         fileBar.Controls.Add(_saveMountsButton, 3, 1);
 
-        TableLayoutPanel mountBar = new() { Dock = DockStyle.Fill, ColumnCount = 6, RowCount = 4, Padding = new Padding(0, 2, 0, 8) };
+        TableLayoutPanel mountBar = new() { Dock = DockStyle.Fill, ColumnCount = 7, RowCount = 4, Padding = new Padding(0, 2, 0, 8) };
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 320));
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 132));
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
         mountBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
@@ -719,19 +732,23 @@ internal sealed class MainForm : Form
         _mountLevelInput.Dock = DockStyle.Fill;
         _mountLevelInput.Maximum = 50;
         mountBar.Controls.Add(_mountLevelInput, 1, 1);
-        ConfigureButton(_applyMountLevelButton, "Apply");
-        _applyMountLevelButton.Click += (_, _) => ApplyMountLevel();
-        mountBar.Controls.Add(_applyMountLevelButton, 2, 1);
+        _mountLevelInput.ValueChanged += (_, _) => UpdateMountLevelFromInput();
+        ConfigureButton(_maxMountLevelButton, "Max Level");
+        _maxMountLevelButton.Click += (_, _) => MaxMountLevel();
+        mountBar.Controls.Add(_maxMountLevelButton, 2, 1);
+        ConfigureButton(_injectMountButton, "Inject Mounts");
+        _injectMountButton.Click += (_, _) => InjectMount();
+        mountBar.Controls.Add(_injectMountButton, 3, 1);
         _creatureTalentFilterText.Dock = DockStyle.Fill;
         _creatureTalentFilterText.TextChanged += (_, _) => RefreshCreatureTalentRows();
         mountBar.Controls.Add(_creatureTalentFilterText, 0, 3);
-        mountBar.SetColumnSpan(_creatureTalentFilterText, 4);
+        mountBar.SetColumnSpan(_creatureTalentFilterText, 5);
         ConfigureButton(_maxAllCreatureTalentsButton, "Max Rank All");
         _maxAllCreatureTalentsButton.Click += (_, _) => MaxAllCreatureTalents();
-        mountBar.Controls.Add(_maxAllCreatureTalentsButton, 4, 3);
-        ConfigureButton(_resetCreatureTalentsButton, "Reset Ranks");
+        mountBar.Controls.Add(_maxAllCreatureTalentsButton, 5, 3);
+        ConfigureButton(_resetCreatureTalentsButton, "Reset All Ranks");
         _resetCreatureTalentsButton.Click += (_, _) => ResetCreatureTalents();
-        mountBar.Controls.Add(_resetCreatureTalentsButton, 5, 3);
+        mountBar.Controls.Add(_resetCreatureTalentsButton, 6, 3);
 
         _creatureTalentsGrid.Dock = DockStyle.Fill;
         _creatureTalentsGrid.AllowUserToAddRows = false;
@@ -752,7 +769,7 @@ internal sealed class MainForm : Form
         TableLayoutPanel editor = new() { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         editor.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -764,10 +781,11 @@ internal sealed class MainForm : Form
         editor.Controls.Add(_creatureTalentRowNameText, 0, 1);
         _creatureTalentRankInput.Dock = DockStyle.Fill;
         _creatureTalentRankInput.Maximum = 99;
+        _creatureTalentRankInput.ValueChanged += (_, _) => UpdateSelectedCreatureTalentRankFromInput();
         editor.Controls.Add(_creatureTalentRankInput, 1, 1);
-        ConfigureButton(_applyCreatureTalentButton, "Apply Rank");
-        _applyCreatureTalentButton.Click += (_, _) => ApplyCreatureTalentEdit();
-        editor.Controls.Add(_applyCreatureTalentButton, 2, 1);
+        ConfigureButton(_resetSelectedCreatureTalentButton, "Reset Rank");
+        _resetSelectedCreatureTalentButton.Click += (_, _) => ResetSelectedCreatureTalents();
+        editor.Controls.Add(_resetSelectedCreatureTalentButton, 2, 1);
         ConfigureButton(_maxCreatureTalentButton, "Max Rank Selected");
         _maxCreatureTalentButton.Click += (_, _) => MaxSelectedCreatureTalent();
         editor.Controls.Add(_maxCreatureTalentButton, 3, 1);
@@ -915,6 +933,43 @@ internal sealed class MainForm : Form
     }
 
 
+    private void InjectMount()
+    {
+        if (_mounts is null)
+        {
+            SetStatus("Load Mounts.json first.");
+            return;
+        }
+
+        if (_mounts.Mounts.Count == 0)
+        {
+            MessageBox.Show(this,
+                "Injecting a mount requires at least one existing station mount to use as a save-format template.",
+                "Cannot inject mount",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        using InjectMountDialog dialog = new(IcarusMounts.SupportedInjectionTypes);
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.SelectedDefinition is not MountInjectionDefinition definition)
+        {
+            return;
+        }
+
+        try
+        {
+            IcarusMount injected = _mounts.InjectMount(definition, dialog.MountName, _selectedMount);
+            RefreshMountPicker();
+            _mountPicker.SelectedItem = injected;
+            SetStatus($"Injected {injected.Name} ({injected.MountType}). Save to write Mounts.json.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Could not inject mount", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            SetStatus("Mount injection failed.");
+        }
+    }
     private void BrowseForMountsFile()
     {
         using OpenFileDialog dialog = new()
@@ -1050,13 +1105,22 @@ internal sealed class MainForm : Form
     private void LoadSelectedMount()
     {
         _selectedMount = _mountPicker.SelectedItem as IcarusMount;
-        if (_selectedMount is not null)
+        _loadingMountSelection = true;
+        try
         {
-            _mountLevelInput.Value = Math.Clamp(_selectedMount.Level, 0, 50);
+            if (_selectedMount is not null)
+            {
+                _mountLevelInput.Maximum = _selectedMount.MaxLevel;
+                _mountLevelInput.Value = Math.Clamp(_selectedMount.Level, 0, _selectedMount.MaxLevel);
+            }
         }
+        finally
+        {
+            _loadingMountSelection = false;
+        }
+
         RefreshCreatureTalentRows();
     }
-
     private void RefreshCharacterPicker()
     {
         _characterPicker.Items.Clear();
@@ -1322,46 +1386,85 @@ internal sealed class MainForm : Form
     private void FillTalentEditorFromSelection()
     {
         List<TalentRow> selectedRows = GetSelectedTalentRows();
-        if (selectedRows.Count == 0)
+        _updatingTalentEditor = true;
+        try
         {
-            _talentRowNameText.Text = "";
-            _talentRankInput.Maximum = 99;
-            return;
-        }
+            if (selectedRows.Count == 0)
+            {
+                _talentRowNameText.Text = "";
+                _talentRankInput.Maximum = 99;
+                return;
+            }
 
-        if (selectedRows.Count > 1)
+            int maxRank = GetRankInputMaximum(selectedRows);
+            ConfigureRankInput(_talentRankInput, maxRank, decimal.ToInt32(_talentRankInput.Value));
+
+            if (selectedRows.Count > 1)
+            {
+                _talentRowNameText.Text = $"{selectedRows.Count} talents selected";
+                return;
+            }
+
+            TalentRow row = selectedRows[0];
+            _talentRowNameText.Text = row.RowName;
+            ConfigureRankInput(_talentRankInput, maxRank, row.Rank);
+        }
+        finally
         {
-            _talentRowNameText.Text = $"{selectedRows.Count} talents selected";
-            _talentRankInput.Maximum = 99;
-            return;
+            _updatingTalentEditor = false;
         }
-
-        TalentRow row = selectedRows[0];
-        _talentRowNameText.Text = row.RowName;
-        _talentRankInput.Maximum = 99;
-        _talentRankInput.Value = Math.Clamp(row.Rank, 0, 99);
     }
-
     private void FillBlueprintEditorFromSelection()
     {
         List<TalentRow> selectedRows = GetSelectedBlueprintRows();
-        if (selectedRows.Count == 0)
+        _updatingBlueprintEditor = true;
+        try
         {
-            _blueprintInfoLabel.Text = "";
-            return;
-        }
+            if (selectedRows.Count == 0)
+            {
+                _blueprintInfoLabel.Text = "";
+                _blueprintRankInput.Maximum = 99;
+                return;
+            }
 
-        if (selectedRows.Count > 1)
+            int maxRank = GetRankInputMaximum(selectedRows);
+            ConfigureRankInput(_blueprintRankInput, maxRank, decimal.ToInt32(_blueprintRankInput.Value));
+
+            if (selectedRows.Count > 1)
+            {
+                _blueprintInfoLabel.Text = $"{selectedRows.Count} blueprints selected";
+                return;
+            }
+
+            TalentRow row = selectedRows[0];
+            _blueprintInfoLabel.Text = row.RowName;
+            ConfigureRankInput(_blueprintRankInput, maxRank, row.Rank);
+        }
+        finally
         {
-            _blueprintInfoLabel.Text = $"{selectedRows.Count} blueprints selected";
-            return;
+            _updatingBlueprintEditor = false;
         }
-
-        TalentRow row = selectedRows[0];
-        _blueprintInfoLabel.Text = row.RowName;
-        _blueprintRankInput.Value = Math.Clamp(row.Rank, 0, 99);
     }
+    private static void ConfigureRankInput(NumericUpDown input, int maxRank, int value)
+    {
+        maxRank = Math.Clamp(maxRank, 0, 99);
+        if (input.Maximum < maxRank)
+        {
+            input.Maximum = maxRank;
+        }
 
+        input.Value = Math.Clamp(value, 0, maxRank);
+        input.Maximum = maxRank;
+    }
+    private static int GetRankInputMaximum(IEnumerable<TalentRow> rows)
+    {
+        int? maxRank = rows
+            .Where(row => row.MaxRank.HasValue)
+            .Select(row => row.MaxRank!.Value)
+            .DefaultIfEmpty(99)
+            .Min();
+        return Math.Clamp(maxRank ?? 99, 0, 99);
+    }
     private void CommitGridRank(DataGridView grid, int rowIndex)
     {
         if (_selectedCharacter is null || rowIndex < 0 || rowIndex >= grid.Rows.Count)
@@ -1392,7 +1495,30 @@ internal sealed class MainForm : Form
         return rows;
     }
 
-    private void ApplyBlueprintEdit()
+    private void UpdateSelectedBlueprintRankFromInput()
+    {
+        if (_updatingBlueprintEditor || _selectedCharacter is null)
+        {
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedBlueprintRows();
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        int rank = decimal.ToInt32(_blueprintRankInput.Value);
+        foreach (TalentRow row in rows)
+        {
+            row.Rank = ClampTalentRank(row.RowName, rank);
+            _selectedCharacter.SetTalent(row.RowName, row.Rank);
+        }
+        _blueprintsGrid.Refresh();
+        SetStatus($"Set rank {rank} on {rows.Count:N0} blueprint(s). Save to write Characters.json.");
+    }
+
+    private void ResetSelectedBlueprints()
     {
         if (_selectedCharacter is null)
         {
@@ -1407,15 +1533,56 @@ internal sealed class MainForm : Form
             return;
         }
 
-        int rank = decimal.ToInt32(_blueprintRankInput.Value);
+        _updatingBlueprintEditor = true;
+        try
+        {
+            _blueprintRankInput.Value = 0;
+        }
+        finally
+        {
+            _updatingBlueprintEditor = false;
+        }
+
         foreach (TalentRow row in rows)
         {
-            _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, rank));
+            row.Rank = 0;
+            _selectedCharacter.SetTalent(row.RowName, 0);
         }
-        RefreshBlueprintRows();
-        SetStatus($"Applied rank {rank} to {rows.Count:N0} blueprint(s). Save to write Characters.json.");
+        _blueprintsGrid.Refresh();
+        SetStatus($"Reset {rows.Count:N0} selected blueprint rank(s). Save to write Characters.json.");
     }
 
+    private void MaxSelectedBlueprints()
+    {
+        if (_selectedCharacter is null || _talentCatalog is null)
+        {
+            SetStatus("Load a character and talent catalog first.");
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedBlueprintRows();
+        if (rows.Count == 0)
+        {
+            SetStatus("Select one or more blueprints first.");
+            return;
+        }
+
+        int changed = 0;
+        foreach (TalentRow row in rows)
+        {
+            TalentMetadata? metadata = _talentCatalog.Find(row.RowName);
+            if (metadata is null)
+            {
+                continue;
+            }
+
+            row.Rank = metadata.MaxRank;
+            _selectedCharacter.SetTalent(row.RowName, metadata.MaxRank);
+            changed++;
+        }
+        _blueprintsGrid.Refresh();
+        SetStatus($"Maxed {changed:N0} selected blueprint(s). Save to write Characters.json.");
+    }
     private void MaxAllBlueprints()
     {
         if (_selectedCharacter is null || _talentCatalog is null)
@@ -1456,23 +1623,34 @@ internal sealed class MainForm : Form
     private void FillCreatureTalentEditorFromSelection()
     {
         List<TalentRow> selectedRows = GetSelectedCreatureTalentRows();
-        if (selectedRows.Count == 0)
+        _updatingCreatureTalentEditor = true;
+        try
         {
-            _creatureTalentRowNameText.Text = "";
-            return;
-        }
+            if (selectedRows.Count == 0)
+            {
+                _creatureTalentRowNameText.Text = "";
+                _creatureTalentRankInput.Maximum = 99;
+                return;
+            }
 
-        if (selectedRows.Count > 1)
+            int maxRank = GetRankInputMaximum(selectedRows);
+            ConfigureRankInput(_creatureTalentRankInput, maxRank, decimal.ToInt32(_creatureTalentRankInput.Value));
+
+            if (selectedRows.Count > 1)
+            {
+                _creatureTalentRowNameText.Text = $"{selectedRows.Count} talents selected";
+                return;
+            }
+
+            TalentRow row = selectedRows[0];
+            _creatureTalentRowNameText.Text = row.RowName;
+            ConfigureRankInput(_creatureTalentRankInput, maxRank, row.Rank);
+        }
+        finally
         {
-            _creatureTalentRowNameText.Text = $"{selectedRows.Count} talents selected";
-            return;
+            _updatingCreatureTalentEditor = false;
         }
-
-        TalentRow row = selectedRows[0];
-        _creatureTalentRowNameText.Text = row.RowName;
-        _creatureTalentRankInput.Value = Math.Clamp(row.Rank, 0, 99);
     }
-
     private void CommitCreatureGridRank(int rowIndex)
     {
         if (_selectedMount is null || rowIndex < 0 || rowIndex >= _creatureTalentsGrid.Rows.Count)
@@ -1503,7 +1681,20 @@ internal sealed class MainForm : Form
         return rows;
     }
 
-    private void ApplyMountLevel()
+    private void UpdateMountLevelFromInput()
+    {
+        if (_loadingMountSelection || _selectedMount is null)
+        {
+            return;
+        }
+
+        int level = Math.Clamp(decimal.ToInt32(_mountLevelInput.Value), 0, _selectedMount.MaxLevel);
+        _selectedMount.Level = level;
+        RefreshCreatureTalentRows();
+        SetStatus($"Set {_selectedMount.Name} to level {level}. Save to write Mounts.json.");
+    }
+
+    private void MaxMountLevel()
     {
         if (_selectedMount is null)
         {
@@ -1511,14 +1702,33 @@ internal sealed class MainForm : Form
             return;
         }
 
-        int level = decimal.ToInt32(_mountLevelInput.Value);
-        string mountName = _selectedMount.Name;
-        _selectedMount.Level = level;
-        RefreshCreatureTalentRows();
-        SetStatus($"Applied level {level} to {mountName}. Save to write Mounts.json.");
+        _mountLevelInput.Value = _selectedMount.MaxLevel;
+        UpdateMountLevelFromInput();
     }
 
-    private void ApplyCreatureTalentEdit()
+    private void UpdateSelectedCreatureTalentRankFromInput()
+    {
+        if (_updatingCreatureTalentEditor || _selectedMount is null)
+        {
+            return;
+        }
+
+        List<TalentRow> rows = GetSelectedCreatureTalentRows();
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        int rank = decimal.ToInt32(_creatureTalentRankInput.Value);
+        foreach (TalentRow row in rows)
+        {
+            row.Rank = ClampCreatureTalentRank(row.RowName, rank);
+            _selectedMount.SetTalent(row.RowName, row.Rank);
+        }
+        _creatureTalentsGrid.Refresh();
+        SetStatus($"Set rank {rank} on {rows.Count:N0} creature talent(s). Save to write Mounts.json.");
+    }
+    private void ResetSelectedCreatureTalents()
     {
         if (_selectedMount is null)
         {
@@ -1533,15 +1743,24 @@ internal sealed class MainForm : Form
             return;
         }
 
-        int rank = decimal.ToInt32(_creatureTalentRankInput.Value);
+        _updatingCreatureTalentEditor = true;
+        try
+        {
+            _creatureTalentRankInput.Value = 0;
+        }
+        finally
+        {
+            _updatingCreatureTalentEditor = false;
+        }
+
         foreach (TalentRow row in rows)
         {
-            _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, rank));
+            row.Rank = 0;
+            _selectedMount.SetTalent(row.RowName, 0);
         }
-        RefreshCreatureTalentRows();
-        SetStatus($"Applied rank {rank} to {rows.Count:N0} creature talent(s). Save to write Mounts.json.");
+        _creatureTalentsGrid.Refresh();
+        SetStatus($"Reset {rows.Count:N0} selected creature talent rank(s). Save to write Mounts.json.");
     }
-
     private void MaxSelectedCreatureTalent()
     {
         if (_selectedMount is null || _talentCatalog is null)
@@ -1648,7 +1867,30 @@ internal sealed class MainForm : Form
         SetStatus($"Applied {GetFriendlyName(name)} ({name}) = {count:N0}. Save to write Profile.json.");
     }
 
-    private void ApplyTalentEdit()
+    private void UpdateSelectedTalentRankFromInput()
+    {
+        if (_updatingTalentEditor || _selectedCharacter is null)
+        {
+            return;
+        }
+
+        List<TalentRow> selectedRows = GetSelectedTalentRows();
+        if (selectedRows.Count == 0)
+        {
+            return;
+        }
+
+        int requestedRank = decimal.ToInt32(_talentRankInput.Value);
+        foreach (TalentRow row in selectedRows)
+        {
+            row.Rank = ClampTalentRank(row.RowName, requestedRank);
+            _selectedCharacter.SetTalent(row.RowName, row.Rank);
+        }
+        _talentsGrid.Refresh();
+        SetStatus($"Set rank {requestedRank} on {selectedRows.Count:N0} selected talent(s). Save to write Characters.json.");
+    }
+
+    private void ResetSelectedTalents()
     {
         if (_selectedCharacter is null)
         {
@@ -1663,18 +1905,24 @@ internal sealed class MainForm : Form
             return;
         }
 
-        int requestedRank = decimal.ToInt32(_talentRankInput.Value);
-        List<string> rowNames = selectedRows.Select(row => row.RowName).ToList();
-        foreach (TalentRow row in selectedRows)
+        _updatingTalentEditor = true;
+        try
         {
-            _selectedCharacter.SetTalent(row.RowName, ClampTalentRank(row.RowName, requestedRank));
+            _talentRankInput.Value = 0;
+        }
+        finally
+        {
+            _updatingTalentEditor = false;
         }
 
-        RefreshTalentRows();
-        SelectTalentRows(rowNames);
-        SetStatus($"Applied rank {requestedRank} to {selectedRows.Count:N0} selected talent(s). Save to write Characters.json.");
+        foreach (TalentRow row in selectedRows)
+        {
+            row.Rank = 0;
+            _selectedCharacter.SetTalent(row.RowName, 0);
+        }
+        _talentsGrid.Refresh();
+        SetStatus($"Reset {selectedRows.Count:N0} selected talent rank(s). Save to write Characters.json.");
     }
-
     private void MaxSelectedTalent()
     {
         if (_selectedCharacter is null)
@@ -1928,7 +2176,7 @@ internal sealed class MainForm : Form
             _creatureTalentsGrid.EndEdit();
             if (_selectedMount is not null)
             {
-                _selectedMount.Level = decimal.ToInt32(_mountLevelInput.Value);
+                _selectedMount.Level = Math.Clamp(decimal.ToInt32(_mountLevelInput.Value), 0, _selectedMount.MaxLevel);
                 foreach (TalentRow row in _creatureTalentRows)
                 {
                     _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, row.Rank));

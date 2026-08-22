@@ -8,8 +8,54 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace IcarusProfileMod;
 
+internal sealed record MountInjectionDefinition(
+    string TypeKey,
+    string DisplayName,
+    string AiSetupRowName,
+    string BlueprintClassName,
+    string Description,
+    bool Rideable = true,
+    int MaxLevel = 50)
+{
+    public string DefaultName => new(DisplayName.Where(char.IsLetterOrDigit).ToArray());
+    public string DisplayText => Rideable ? $"{DisplayName} ({TypeKey})" : $"{DisplayName} ({TypeKey}, companion)";
+}
 internal sealed class IcarusMounts
 {
+    public static IReadOnlyList<MountInjectionDefinition> SupportedInjectionTypes { get; } =
+    [
+        new("Dog", "Dog", "Tame_Dog_D1", "BP_Tame_Dog_D1_C", "Companion pet with the Creature_Dog talent tree.", Rideable: false, MaxLevel: 25),
+        new("Cat", "Cat", "Tame_Cat_B1", "BP_Tame_Cat_B_C", "Companion pet with the Creature_Cat talent tree.", Rideable: false, MaxLevel: 25),
+        new("Chicken", "Chicken", "Chicken", "BP_Tame_Chicken_C", "Tamed farm animal with the Creature_Chicken talent tree.", Rideable: false, MaxLevel: 25),
+        new("Rooster", "Rooster", "Rooster", "BP_Tame_Rooster_C", "Tamed farm animal with the Creature_Rooster talent tree.", Rideable: false, MaxLevel: 25),
+        new("Sheep", "Sheep", "Sheep", "BP_Tame_Sheep_C", "Tamed farm animal with the Creature_Sheep talent tree.", Rideable: false, MaxLevel: 25),
+        new("Ram", "Ram", "Ram", "BP_Tame_Ram_C", "Tamed farm animal with the Creature_Ram talent tree.", Rideable: false, MaxLevel: 25),
+        new("Cow", "Cow", "Cow", "BP_Tame_Cow_C", "Tamed farm animal with the Creature_Cow talent tree.", Rideable: false, MaxLevel: 25),
+        new("Pig", "Pig", "Pig", "BP_Tame_Pig_C", "Tamed farm animal with the Creature_Pig talent tree.", Rideable: false, MaxLevel: 25),
+        new("Wolf", "Wolf", "Tamed_Forest_Wolf", "BP_Tamed_Wolf_C", "Tamed wolf with the Creature_Wolf talent tree.", Rideable: false, MaxLevel: 25),
+        new("SnowWolf", "Snow Wolf", "Tamed_Snow_Wolf", "BP_Tamed_Wolf_Snow_C", "Tamed snow wolf with the Creature_Snow_Wolf talent tree.", Rideable: false, MaxLevel: 25),
+        new("Hyena", "Hyena", "Tamed_Desert_Wolf", "BP_Tamed_Wolf_Desert_C", "Tamed desert wolf with the Creature_Desert_Wolf talent tree.", Rideable: false, MaxLevel: 25),
+        new("MiniHippo", "Mini Hippo", "Mini_Hippo_Quest", "BP_Mount_MiniHippo_Quest_C", "Companion creature using the station mount save format.", Rideable: false, MaxLevel: 25),
+        new("BluebackDaisy", "Blueback Daisy", "Quest_Blueback_Daisy", "BP_Mount_Blueback_Daisy_C", "Companion creature with the Creature_Blueback talent tree.", Rideable: false, MaxLevel: 25),
+        new("Skulk", "Skulk", "Tamed_Orka", "BP_Tamed_Orka_C", "Tamed skulk with the Creature_Orka talent tree.", Rideable: false, MaxLevel: 25),
+        new("Storca", "Storca", "Tamed_Storca", "BP_Tamed_Storca_C", "Tamed storca with the Creature_Storca talent tree.", Rideable: false, MaxLevel: 25),
+        new("Gribbler", "Gribbler", "Tamed_Tundra_Monkey", "BP_Tamed_Tundra_Monkey_C", "Tamed gribbler with the Creature_Tundra_Monkey talent tree.", Rideable: false, MaxLevel: 25),
+        new("Terrenus", "Terrenus", "Mount_Horse", "BP_Mount_Horse_C", "Wild alien mount.", MaxLevel: 50),
+        new("Horse", "Horse", "Mount_Horse_Standard_A3", "BP_Mount_Horse_Standard_C", "Workshop horse variant.", MaxLevel: 50),
+        new("Moa", "Moa", "Mount_Moa", "BP_Mount_Moa_C", "Fast rideable mount.", MaxLevel: 50),
+        new("ArcticMoa", "Arctic Moa", "Mount_Arctic_Moa", "BP_Mount_Arctic_Moa_C", "Cold-resistant moa variant.", MaxLevel: 50),
+        new("Buffalo", "Buffalo", "Mount_Buffalo", "BP_Mount_Buffalo_C", "Large carrying-capacity mount.", MaxLevel: 50),
+        new("Tusker", "Tusker", "Mount_Tusker", "BP_Mount_Tusker_C", "Large arctic mount.", MaxLevel: 50),
+        new("Zebra", "Zebra", "Mount_Zebra", "BP_Mount_Zebra_C", "Fast rideable mount.", MaxLevel: 50),
+        new("WoolyZebra", "Shaggy Zebra", "Mount_WoolyZebra", "BP_Mount_Wooly_Zebra_C", "Cold-resistant zebra variant.", MaxLevel: 50),
+        new("SwampBird", "Ubi", "Mount_SwampBird", "BP_Mount_SwampBird_C", "Swamp bird mount.", MaxLevel: 50),
+        new("WoollyMammoth", "Woolly Mammoth", "Mount_WoollyMammoth", "BP_Mount_WoollyMammoth_C", "Massive arctic mount.", MaxLevel: 50),
+        new("Bull", "Bull", "Mount_Bull", "BP_Mount_Bull_C", "Large rideable creature with the Creature_Bull talent tree.", MaxLevel: 50),
+        new("Raptor", "Raptor", "Mount_Raptor", "BP_Mount_Raptor_C", "Rideable raptor with the Creature_Raptor talent tree.", MaxLevel: 50),
+        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor with the Creature_Raptor_Desert talent tree.", MaxLevel: 50),
+        new("Draven", "Draven", "Mount_Chew", "BP_Mount_Chew_C", "Rideable draven with the Creature_Chew talent tree.", MaxLevel: 50),
+        new("Slinker", "Slinker", "Mount_Slinker", "BP_Mount_Slinker_C", "Rideable slinker with the Creature_Slinker talent tree.", MaxLevel: 50)
+    ];
     private readonly JsonObject _root;
     private readonly List<IcarusMount> _mounts;
     private readonly UePropertySerializer _serializer = new();
@@ -55,6 +101,89 @@ internal sealed class IcarusMounts
         return new IcarusMounts(path, root, mounts);
     }
 
+    public IcarusMount InjectMount(MountInjectionDefinition definition, string name, IcarusMount? template = null)
+    {
+        if (_root["SavedMounts"] is not JsonArray savedMounts)
+        {
+            savedMounts = [];
+            _root["SavedMounts"] = savedMounts;
+        }
+
+        template ??= _mounts.FirstOrDefault();
+        if (template is null)
+        {
+            throw new InvalidOperationException("Injecting a mount requires at least one existing station mount to use as a save-format template.");
+        }
+
+        JsonObject root = (JsonObject)template.Root.DeepClone();
+        List<UePropertyTag> properties = CloneProperties(template.Properties);
+        int actorId = GenerateUniqueActorId();
+        int objectSuffix = GenerateUniqueObjectSuffix();
+        int index = savedMounts.Count;
+        IcarusMount mount = new(index, root, properties);
+        mount.ConfigureInjected(definition, name, actorId, objectSuffix);
+
+        savedMounts.Add(root);
+        _mounts.Add(mount);
+        return mount;
+    }
+
+    private int GenerateUniqueActorId()
+    {
+        HashSet<int> existingIds = new(_mounts.SelectMany(mount => mount.KnownIntegerIds()));
+        for (int attempt = 0; attempt < 1000; attempt++)
+        {
+            int candidate = Random.Shared.Next(100000, 999999);
+            if (!existingIds.Contains(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidOperationException("Could not generate a unique mount actor id.");
+    }
+
+    private int GenerateUniqueObjectSuffix()
+    {
+        HashSet<int> existingIds = new(_mounts.SelectMany(mount => mount.KnownObjectSuffixes()));
+        for (int attempt = 0; attempt < 1000; attempt++)
+        {
+            int candidate = Random.Shared.Next(2147000000, int.MaxValue);
+            if (!existingIds.Contains(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidOperationException("Could not generate a unique mount object id.");
+    }
+
+    private static List<UePropertyTag> CloneProperties(IEnumerable<UePropertyTag> properties)
+    {
+        return properties.Select(CloneProperty).ToList();
+    }
+
+    private static UePropertyTag CloneProperty(UePropertyTag property)
+    {
+        UePropertyTag clone = new(property.Name, property.TypeName)
+        {
+            Value = CloneValue(property.Value),
+            InnerType = property.InnerType,
+            StructType = property.StructType,
+            EnumType = property.EnumType,
+            ElementName = property.ElementName
+        };
+        foreach (UePropertyTag child in property.Nested)
+        {
+            clone.Nested.Add(CloneProperty(child));
+        }
+        return clone;
+    }
+
+    private static object? CloneValue(object? value)
+    {
+        return value is byte[] bytes ? bytes.ToArray() : value;
+    }
     public string SaveWithBackup()
     {
         string backupPath = CreateBackupPath(Path);
@@ -146,9 +275,9 @@ internal sealed class IcarusMount
         }
     }
 
-    public int MaxLevel => MountType switch
+    public int MaxLevel => NormalizeMountType(MountType) switch
     {
-        "Dog" or "Cat" => 25,
+        "Dog" or "Cat" or "Chicken" or "Rooster" or "Sheep" or "Ram" or "Cow" or "Pig" or "Wolf" or "SnowWolf" or "Hyena" or "MiniHippo" or "BluebackDaisy" or "Skulk" or "Storca" or "Gribbler" => 25,
         _ => 50
     };
 
@@ -163,7 +292,7 @@ internal sealed class IcarusMount
     {
         get
         {
-            string type = MountType.Replace(" ", "", StringComparison.OrdinalIgnoreCase);
+            string type = NormalizeMountType(MountType);
             Dictionary<string, string> aliases = new(StringComparer.OrdinalIgnoreCase)
             {
                 ["Dog"] = "Creature_Dog",
@@ -178,11 +307,34 @@ internal sealed class IcarusMount
                 ["WoolyZebra"] = "Creature_WoolyZebra",
                 ["WoollyMammoth"] = "Creature_WoollyMammoth",
                 ["SwampBird"] = "Creature_SwampBird",
-                ["BluebackDaisy"] = "Creature_Blueback"
+                ["Ubi"] = "Creature_SwampBird",
+                ["Blueback"] = "Creature_Blueback",
+                ["BluebackDaisy"] = "Creature_Blueback",
+                ["Bull"] = "Creature_Bull",
+                ["Raptor"] = "Creature_Raptor",
+                ["DuneRaptor"] = "Creature_Raptor_Desert",
+                ["DesertRaptor"] = "Creature_Raptor_Desert",
+                ["Draven"] = "Creature_Chew",
+                ["Chew"] = "Creature_Chew",
+                ["Slinker"] = "Creature_Slinker",
+                ["Wolf"] = "Creature_Wolf",
+                ["SnowWolf"] = "Creature_Snow_Wolf",
+                ["Hyena"] = "Creature_Desert_Wolf",
+                ["DesertWolf"] = "Creature_Desert_Wolf",
+                ["Skulk"] = "Creature_Orka",
+                ["Orka"] = "Creature_Orka",
+                ["Storca"] = "Creature_Storca",
+                ["Gribbler"] = "Creature_Tundra_Monkey",
+                ["TundraMonkey"] = "Creature_Tundra_Monkey"
             };
 
             return aliases.TryGetValue(type, out string? treeRowName) ? treeRowName : $"Creature_{type}";
         }
+    }
+
+    private static string NormalizeMountType(string mountType)
+    {
+        return new string(mountType.Where(char.IsLetterOrDigit).ToArray());
     }
 
     public IReadOnlyList<TalentEntry> Talents
@@ -203,6 +355,56 @@ internal sealed class IcarusMount
         }
     }
 
+    public void ConfigureInjected(MountInjectionDefinition definition, string name, int actorId, int objectSuffix)
+    {
+        string objectName = $"{definition.BlueprintClassName}_{objectSuffix}";
+        Root["DatabaseGUID"] = "noguid";
+        Root["MountName"] = name;
+        Root["MountType"] = definition.TypeKey;
+        Root["MountIconName"] = actorId.ToString();
+
+        SetStringProperty("MountName", name, "StrProperty");
+        SetStringProperty("AISetupRowName", definition.AiSetupRowName, "NameProperty");
+        SetStringProperty("ActorClassName", definition.BlueprintClassName, "NameProperty");
+        SetStringProperty("ObjectFName", objectName, "NameProperty");
+        SetStringProperty("ActorPathName", BuildInjectedActorPath(objectName), "StrProperty");
+        SetIntProperty("IcarusActorGUID", actorId);
+        ClearStructArray("Talents");
+        ClearStructArray("Modifiers");
+        ClearStructArray("StomachContents");
+        Level = 0;
+    }
+
+    public IEnumerable<int> KnownIntegerIds()
+    {
+        if (int.TryParse(Root["MountIconName"]?.GetValue<string>(), out int iconId))
+        {
+            yield return iconId;
+        }
+
+        int? actorGuid = GetIntProperty("IcarusActorGUID");
+        if (actorGuid.HasValue)
+        {
+            yield return actorGuid.Value;
+        }
+    }
+
+    public IEnumerable<int> KnownObjectSuffixes()
+    {
+        foreach (string? value in new[] { GetStringProperty("ObjectFName"), GetStringProperty("ActorPathName") })
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            string suffix = value[(value.LastIndexOf('_') + 1)..];
+            if (int.TryParse(suffix, out int id))
+            {
+                yield return id;
+            }
+        }
+    }
     public override string ToString()
     {
         return $"{Name} ({MountType}, level {Level})";
@@ -305,6 +507,43 @@ internal sealed class IcarusMount
         return element;
     }
 
+    private void SetStringProperty(string name, string value, string typeName)
+    {
+        UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
+        if (property is not null)
+        {
+            property.TypeName = typeName;
+            property.Value = value;
+        }
+    }
+
+    private void ClearStructArray(string name)
+    {
+        UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
+        if (property is not null)
+        {
+            property.InnerType = "StructProperty";
+            property.ElementName ??= name;
+            property.Nested.Clear();
+        }
+    }
+
+    private string BuildInjectedActorPath(string objectName)
+    {
+        string? existingPath = GetStringProperty("ActorPathName");
+        if (string.IsNullOrWhiteSpace(existingPath))
+        {
+            return objectName;
+        }
+
+        int lastDot = existingPath.LastIndexOf('.');
+        if (lastDot < 0)
+        {
+            return objectName;
+        }
+
+        return existingPath[..(lastDot + 1)] + objectName;
+    }
     private string? GetStringProperty(string name)
     {
         return GetStringValue(UePropertySerializer.FindProperty(Properties, name));
