@@ -1928,6 +1928,7 @@ internal sealed class MainForm : Form
             _creatureTalentsGrid.EndEdit();
             if (_selectedMount is not null)
             {
+                _selectedMount.Level = decimal.ToInt32(_mountLevelInput.Value);
                 foreach (TalentRow row in _creatureTalentRows)
                 {
                     _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, row.Rank));

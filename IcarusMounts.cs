@@ -130,13 +130,27 @@ internal sealed class IcarusMount
 
     public int Level
     {
-        get => Root["MountLevel"]?.GetValue<int>() ?? 0;
+        get
+        {
+            int jsonLevel = Root["MountLevel"]?.GetValue<int>() ?? 0;
+            int actorLevel = GetActorIntVariable("LastLevelAchieved") ?? 0;
+            int experienceLevel = EstimateLevelFromExperience(Experience);
+            return Math.Clamp(Math.Max(Math.Max(jsonLevel, actorLevel), experienceLevel), 0, MaxLevel);
+        }
         set
         {
-            Root["MountLevel"] = value;
-            SetIntProperty("Experience", EstimateExperienceForLevel(value));
+            int cappedLevel = Math.Clamp(value, 0, MaxLevel);
+            Root["MountLevel"] = cappedLevel;
+            SetIntProperty("Experience", EstimateExperienceForLevel(cappedLevel));
+            SetActorIntVariable("LastLevelAchieved", cappedLevel);
         }
     }
+
+    public int MaxLevel => MountType switch
+    {
+        "Dog" or "Cat" => 25,
+        _ => 50
+    };
 
     public string MountType => Root["MountType"]?.GetValue<string>() ?? "Unknown";
     public string ActorClassName => GetStringProperty("ActorClassName") ?? "";
@@ -197,6 +211,7 @@ internal sealed class IcarusMount
     public void SetTalent(string rowName, int rank)
     {
         UePropertyTag talents = GetOrCreateTalentsProperty();
+        RemoveEmptyTalentEntries(talents);
         UePropertyTag? existing = talents.Nested.FirstOrDefault(item =>
             string.Equals(ReadTalentEntry(item).RowName, rowName, StringComparison.OrdinalIgnoreCase));
 
@@ -244,13 +259,20 @@ internal sealed class IcarusMount
         return talents;
     }
 
+    private static void RemoveEmptyTalentEntries(UePropertyTag talents)
+    {
+        talents.Nested.RemoveAll(item => string.IsNullOrWhiteSpace(ReadTalentEntry(item).RowName));
+    }
+
     private static TalentEntry ReadTalentEntry(UePropertyTag element)
     {
-        string rowName = GetStringValue(element.Find("RowName"))
+        string rowName = GetStringValue(element.Find("TalentRowName"))
+            ?? GetStringValue(element.Find("RowName"))
             ?? GetStringValue(element.Find("TalentName"))
             ?? GetStringValue(element.Find("Talent"))
             ?? "";
-        int rank = GetIntValue(element.Find("Rank"))
+        int rank = GetIntValue(element.Find("TalentRank"))
+            ?? GetIntValue(element.Find("Rank"))
             ?? GetIntValue(element.Find("Level"))
             ?? 0;
         return new TalentEntry(rowName, rank);
@@ -258,15 +280,18 @@ internal sealed class IcarusMount
 
     private static void WriteTalentEntry(UePropertyTag element, string rowName, int rank)
     {
-        UePropertyTag rowNameProperty = element.Find("RowName")
+        UePropertyTag rowNameProperty = element.Find("TalentRowName")
+            ?? element.Find("RowName")
             ?? element.Find("TalentName")
             ?? element.Find("Talent")
-            ?? AddNested(element, new UePropertyTag("RowName", "StrProperty"));
+            ?? AddNested(element, new UePropertyTag("TalentRowName", "StrProperty"));
+        rowNameProperty.TypeName = "StrProperty";
         rowNameProperty.Value = rowName;
 
-        UePropertyTag rankProperty = element.Find("Rank")
+        UePropertyTag rankProperty = element.Find("TalentRank")
+            ?? element.Find("Rank")
             ?? element.Find("Level")
-            ?? AddNested(element, new UePropertyTag("Rank", "IntProperty"));
+            ?? AddNested(element, new UePropertyTag("TalentRank", "IntProperty"));
         rankProperty.Value = rank;
     }
 
@@ -290,6 +315,42 @@ internal sealed class IcarusMount
         return GetIntValue(UePropertySerializer.FindProperty(Properties, name));
     }
 
+    private int? GetActorIntVariable(string variableName)
+    {
+        UePropertyTag? intVariables = UePropertySerializer.FindProperty(Properties, "IntVariables");
+        if (intVariables is null)
+        {
+            return null;
+        }
+
+        UePropertyTag? variable = intVariables.Nested.FirstOrDefault(item =>
+            string.Equals(GetStringValue(item.Find("VariableName")), variableName, StringComparison.OrdinalIgnoreCase));
+        return GetIntValue(variable?.Find("iVariable"));
+    }
+
+    private void SetActorIntVariable(string variableName, int value)
+    {
+        UePropertyTag intVariables = GetOrCreateStructArray("IntVariables", "ActorIntVariableRecord");
+        UePropertyTag? variable = intVariables.Nested.FirstOrDefault(item =>
+            string.Equals(GetStringValue(item.Find("VariableName")), variableName, StringComparison.OrdinalIgnoreCase));
+
+        if (variable is null)
+        {
+            variable = new UePropertyTag("IntVariables", "StructProperty")
+            {
+                StructType = "ActorIntVariableRecord"
+            };
+            AddNested(variable, new UePropertyTag("VariableName", "NameProperty") { Value = variableName });
+            AddNested(variable, new UePropertyTag("iVariable", "IntProperty") { Value = value });
+            intVariables.Nested.Add(variable);
+            return;
+        }
+
+        UePropertyTag valueProperty = variable.Find("iVariable")
+            ?? AddNested(variable, new UePropertyTag("iVariable", "IntProperty"));
+        valueProperty.Value = value;
+    }
+
     private void SetIntProperty(string name, int value)
     {
         UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
@@ -297,6 +358,27 @@ internal sealed class IcarusMount
         {
             property.Value = value;
         }
+    }
+
+    private UePropertyTag GetOrCreateStructArray(string name, string structType)
+    {
+        UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
+        if (property is not null)
+        {
+            property.InnerType = "StructProperty";
+            property.ElementName ??= name;
+            property.StructType ??= structType;
+            return property;
+        }
+
+        property = new UePropertyTag(name, "ArrayProperty")
+        {
+            InnerType = "StructProperty",
+            ElementName = name,
+            StructType = structType
+        };
+        Properties.Add(property);
+        return property;
     }
 
     private static string? GetStringValue(UePropertyTag? property)
@@ -318,6 +400,23 @@ internal sealed class IcarusMount
     {
         parent.Nested.Add(child);
         return child;
+    }
+
+    private int EstimateLevelFromExperience(int experience)
+    {
+        int bestLevel = 0;
+        int bestDelta = int.MaxValue;
+        for (int level = 0; level <= MaxLevel; level++)
+        {
+            int delta = Math.Abs(EstimateExperienceForLevel(level) - experience);
+            if (delta < bestDelta)
+            {
+                bestDelta = delta;
+                bestLevel = level;
+            }
+        }
+
+        return bestLevel;
     }
 
     private static int EstimateExperienceForLevel(int level)
