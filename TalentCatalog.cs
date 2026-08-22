@@ -35,7 +35,8 @@ internal sealed class TalentCatalog
     public IEnumerable<TalentMetadata> CharacterTalents => Talents.Where(talent => talent.IsCharacterTalent);
 
     public IEnumerable<TalentMetadata> Blueprints => Talents.Where(talent =>
-        talent.TreeArchetype.StartsWith("Blueprint_", StringComparison.OrdinalIgnoreCase));
+        talent.TreeArchetype.StartsWith("Blueprint_", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(talent.TalentType, "Reroute", StringComparison.OrdinalIgnoreCase));
 
     public IEnumerable<TalentMetadata> CreatureTalents => Talents.Where(talent =>
         talent.TreeRowName.StartsWith("Creature_", StringComparison.OrdinalIgnoreCase));

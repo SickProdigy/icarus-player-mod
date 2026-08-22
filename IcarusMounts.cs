@@ -22,6 +22,8 @@ internal sealed record MountInjectionDefinition(
 }
 internal sealed class IcarusMounts
 {
+    private const string TemplateFileName = "MountTemplate.json";
+
     public static IReadOnlyList<MountInjectionDefinition> SupportedInjectionTypes { get; } =
     [
         new("Dog", "Dog", "Tame_Dog_D1", "BP_Tame_Dog_D1_C", "Companion pet with the Creature_Dog talent tree.", Rideable: false, MaxLevel: 25),
@@ -101,6 +103,15 @@ internal sealed class IcarusMounts
         return new IcarusMounts(path, root, mounts);
     }
 
+    public static IcarusMounts CreateEmpty(string path)
+    {
+        JsonObject root = new()
+        {
+            ["SavedMounts"] = new JsonArray()
+        };
+        return new IcarusMounts(path, root, []);
+    }
+
     public IcarusMount InjectMount(MountInjectionDefinition definition, string name, IcarusMount? template = null)
     {
         if (_root["SavedMounts"] is not JsonArray savedMounts)
@@ -109,10 +120,10 @@ internal sealed class IcarusMounts
             _root["SavedMounts"] = savedMounts;
         }
 
-        template ??= _mounts.FirstOrDefault();
+        template ??= _mounts.FirstOrDefault() ?? LoadBundledTemplateMount();
         if (template is null)
         {
-            throw new InvalidOperationException("Injecting a mount requires at least one existing station mount to use as a save-format template.");
+            throw new InvalidOperationException("Could not load the bundled mount template.");
         }
 
         JsonObject root = (JsonObject)template.Root.DeepClone();
@@ -121,11 +132,40 @@ internal sealed class IcarusMounts
         int objectSuffix = GenerateUniqueObjectSuffix();
         int index = savedMounts.Count;
         IcarusMount mount = new(index, root, properties);
-        mount.ConfigureInjected(definition, name, actorId, objectSuffix);
+        mount.ConfigureInjected(definition, name, actorId, objectSuffix, GetOwnerPlayerId());
 
         savedMounts.Add(root);
         _mounts.Add(mount);
         return mount;
+    }
+
+    private static IcarusMount? LoadBundledTemplateMount()
+    {
+        foreach (string templatePath in GetTemplatePaths())
+        {
+            if (!File.Exists(templatePath))
+            {
+                continue;
+            }
+
+            IcarusMounts templateMounts = Load(templatePath);
+            return templateMounts.Mounts.FirstOrDefault();
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<string> GetTemplatePaths()
+    {
+        yield return System.IO.Path.Combine(AppContext.BaseDirectory, "data", TemplateFileName);
+        yield return System.IO.Path.Combine(AppContext.BaseDirectory, TemplateFileName);
+        yield return System.IO.Path.Combine(Environment.CurrentDirectory, "data", TemplateFileName);
+    }
+
+    private string? GetOwnerPlayerId()
+    {
+        string? playerFolder = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(Path));
+        return string.IsNullOrWhiteSpace(playerFolder) ? null : playerFolder;
     }
 
     private int GenerateUniqueActorId()
@@ -184,10 +224,20 @@ internal sealed class IcarusMounts
     {
         return value is byte[] bytes ? bytes.ToArray() : value;
     }
-    public string SaveWithBackup()
+    public string? SaveWithBackup()
     {
-        string backupPath = CreateBackupPath(Path);
-        File.Copy(Path, backupPath, overwrite: false);
+        string? backupPath = null;
+        string? directory = System.IO.Path.GetDirectoryName(Path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        if (File.Exists(Path))
+        {
+            backupPath = CreateBackupPath(Path);
+            File.Copy(Path, backupPath, overwrite: false);
+        }
 
         if (_root["SavedMounts"] is not JsonArray savedMounts)
         {
@@ -355,7 +405,7 @@ internal sealed class IcarusMount
         }
     }
 
-    public void ConfigureInjected(MountInjectionDefinition definition, string name, int actorId, int objectSuffix)
+    public void ConfigureInjected(MountInjectionDefinition definition, string name, int actorId, int objectSuffix, string? ownerPlayerId = null)
     {
         string objectName = $"{definition.BlueprintClassName}_{objectSuffix}";
         Root["DatabaseGUID"] = "noguid";
@@ -368,6 +418,11 @@ internal sealed class IcarusMount
         SetStringProperty("ActorClassName", definition.BlueprintClassName, "NameProperty");
         SetStringProperty("ObjectFName", objectName, "NameProperty");
         SetStringProperty("ActorPathName", BuildInjectedActorPath(objectName), "StrProperty");
+        if (!string.IsNullOrWhiteSpace(ownerPlayerId))
+        {
+            SetStringProperty("PlayerID", ownerPlayerId, "StrProperty");
+        }
+        SetStringProperty("OwnerName", "", "StrProperty");
         SetIntProperty("IcarusActorGUID", actorId);
         ClearStructArray("Talents");
         ClearStructArray("Modifiers");
@@ -510,11 +565,14 @@ internal sealed class IcarusMount
     private void SetStringProperty(string name, string value, string typeName)
     {
         UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
-        if (property is not null)
+        if (property is null)
         {
-            property.TypeName = typeName;
-            property.Value = value;
+            property = new UePropertyTag(name, typeName);
+            Properties.Add(property);
         }
+
+        property.TypeName = typeName;
+        property.Value = value;
     }
 
     private void ClearStructArray(string name)
@@ -593,10 +651,14 @@ internal sealed class IcarusMount
     private void SetIntProperty(string name, int value)
     {
         UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
-        if (property is not null)
+        if (property is null)
         {
-            property.Value = value;
+            property = new UePropertyTag(name, "IntProperty");
+            Properties.Add(property);
         }
+
+        property.TypeName = "IntProperty";
+        property.Value = value;
     }
 
     private UePropertyTag GetOrCreateStructArray(string name, string structType)

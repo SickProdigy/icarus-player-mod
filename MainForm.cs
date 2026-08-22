@@ -40,7 +40,7 @@ internal sealed class MainForm : Form
     private readonly NumericUpDown _resourceCountInput = new();
     private readonly Button _applyResourceButton = new();
     private readonly Label _profileInfoLabel = new();
-    private readonly Label _playerDataLabel = new();
+    private readonly TextBox _playerDataPathText = new();
     private readonly Label _statusLabel = new();
     private readonly BindingList<MetaResourceRow> _resourceRows = new();
 
@@ -106,6 +106,7 @@ internal sealed class MainForm : Form
     private IcarusMount? _selectedMount;
     private TalentCatalog? _talentCatalog;
     private bool _showSoloTalents;
+    private bool _mountsTabActive;
     private bool _updatingTalentEditor;
     private bool _updatingBlueprintEditor;
 
@@ -170,12 +171,13 @@ internal sealed class MainForm : Form
             TextAlign = ContentAlignment.MiddleLeft,
             Padding = new Padding(0, 0, 18, 0)
         }, 0, 0);
-        _playerDataLabel.Text = "Looking for player data...";
-        _playerDataLabel.Dock = DockStyle.Fill;
-        _playerDataLabel.AutoEllipsis = true;
-        _playerDataLabel.ForeColor = SystemColors.GrayText;
-        _playerDataLabel.TextAlign = ContentAlignment.MiddleLeft;
-        header.Controls.Add(_playerDataLabel, 1, 0);
+        _playerDataPathText.Text = "Looking for player data...";
+        _playerDataPathText.Dock = DockStyle.Fill;
+        _playerDataPathText.ReadOnly = true;
+        _playerDataPathText.BorderStyle = BorderStyle.FixedSingle;
+        _playerDataPathText.ForeColor = SystemColors.GrayText;
+        _playerDataPathText.BackColor = SystemColors.Window;
+        header.Controls.Add(_playerDataPathText, 1, 0);
         root.Controls.Add(header, 0, 1);
 
         TabControl tabs = new()
@@ -206,6 +208,13 @@ internal sealed class MainForm : Form
 
         tabs.SelectedIndexChanged += (_, _) =>
         {
+            _mountsTabActive = tabs.SelectedTab == mountsTab;
+            if (_mountsTabActive)
+            {
+                LoadSelectedMountsFile();
+                return;
+            }
+
             if (tabs.SelectedTab != talentsTab && tabs.SelectedTab != soloTalentsTab)
             {
                 return;
@@ -891,9 +900,9 @@ internal sealed class MainForm : Form
         }
 
         string? discoveredFile = profiles.FirstOrDefault() ?? charactersFiles.FirstOrDefault() ?? mountsFiles.FirstOrDefault();
-        _playerDataLabel.Text = discoveredFile is null
-            ? "Player data folder not found — use Browse in either editor"
-            : $"Player data: {Path.GetDirectoryName(discoveredFile)}";
+        _playerDataPathText.Text = discoveredFile is null
+            ? "Player data folder not found - use Browse in either editor"
+            : Path.GetDirectoryName(discoveredFile) ?? "";
     }
 
     private void BrowseForProfile()
@@ -938,16 +947,6 @@ internal sealed class MainForm : Form
         if (_mounts is null)
         {
             SetStatus("Load Mounts.json first.");
-            return;
-        }
-
-        if (_mounts.Mounts.Count == 0)
-        {
-            MessageBox.Show(this,
-                "Injecting a mount requires at least one existing station mount to use as a save-format template.",
-                "Cannot inject mount",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
             return;
         }
 
@@ -1019,11 +1018,8 @@ internal sealed class MainForm : Form
             }
 
             string mountsPath = ProfileFinder.GetMountsPathForProfile(path);
-            if (File.Exists(mountsPath))
-            {
-                AddComboBoxItem(_mountsFilePicker, mountsPath);
-                _mountsFilePicker.SelectedItem = mountsPath;
-            }
+            AddComboBoxItem(_mountsFilePicker, mountsPath);
+            _mountsFilePicker.SelectedItem = mountsPath;
         }
         catch (Exception ex)
         {
@@ -1063,10 +1059,38 @@ internal sealed class MainForm : Form
 
         try
         {
-            _mounts = IcarusMounts.Load(path);
+            if (File.Exists(path))
+            {
+                _mounts = IcarusMounts.Load(path);
+                SetStatus($"Loaded {Path.GetFileName(path)}.");
+            }
+            else
+            {
+                if (!_mountsTabActive)
+                {
+                    _mounts = null;
+                    RefreshMountPicker();
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show(this,
+                    $"{Path.GetFileName(path)} does not exist for this player data folder. Create a new Mounts.json when you save?",
+                    "Create Mounts.json?",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (result != DialogResult.Yes)
+                {
+                    _mounts = null;
+                    RefreshMountPicker();
+                    SetStatus("Mounts.json was not created. Use Browse to select an existing file.");
+                    return;
+                }
+
+                _mounts = IcarusMounts.CreateEmpty(path);
+                SetStatus("Prepared a new Mounts.json. Inject a mount, then Save to create the file.");
+            }
             UpdatePlayerDataHeader(path);
             RefreshMountPicker();
-            SetStatus($"Loaded {Path.GetFileName(path)}.");
         }
         catch (Exception ex)
         {
@@ -2183,8 +2207,10 @@ internal sealed class MainForm : Form
                 }
             }
 
-            string backupPath = _mounts.SaveWithBackup();
-            SetStatus($"Saved Mounts.json. Backup: {backupPath}");
+            string? backupPath = _mounts.SaveWithBackup();
+            SetStatus(backupPath is null
+                ? "Created Mounts.json."
+                : $"Saved Mounts.json. Backup: {backupPath}");
         }
         catch (Exception ex)
         {
@@ -2260,7 +2286,7 @@ internal sealed class MainForm : Form
 
     private void UpdatePlayerDataHeader(string filePath)
     {
-        _playerDataLabel.Text = $"Player data: {Path.GetDirectoryName(filePath)}";
+        _playerDataPathText.Text = Path.GetDirectoryName(filePath) ?? "";
     }
 
     private void ShowAboutDialog()
