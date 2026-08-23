@@ -20,6 +20,21 @@ internal sealed record MountInjectionDefinition(
     public string DefaultName => new(DisplayName.Where(char.IsLetterOrDigit).ToArray());
     public string DisplayText => Rideable ? $"{DisplayName} ({TypeKey})" : $"{DisplayName} ({TypeKey}, companion)";
 }
+
+internal sealed record CreatureAppearanceVariant(
+    string TypeKey,
+    string DisplayName,
+    string AiSetupRowName,
+    string BlueprintClassName,
+    int Variation,
+    string Source)
+{
+    public string DisplayText => string.IsNullOrWhiteSpace(Source) ? DisplayName : $"{DisplayName} ({Source})";
+    public override string ToString() => DisplayText;
+}
+
+internal sealed record CreatureGeneticEntry(string Name, int Value);
+
 internal sealed class IcarusMounts
 {
     private const string TemplateFileName = "MountTemplate.json";
@@ -89,10 +104,34 @@ internal sealed class IcarusMounts
         new("WoollyMammoth", "Woolly Mammoth", "Mount_WoollyMammoth", "BP_Mount_WoollyMammoth_C", "Massive arctic mount.", MaxLevel: GetMaxLevelForType("WoollyMammoth")),
         new("Bull", "Bull", "Mount_Bull", "BP_Mount_Bull_C", "Large rideable creature with the Creature_Bull talent tree.", MaxLevel: GetMaxLevelForType("Bull")),
         new("Raptor", "Raptor", "Mount_Raptor", "BP_Mount_Raptor_C", "Rideable raptor with the Creature_Raptor talent tree.", MaxLevel: GetMaxLevelForType("Raptor")),
-        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor with the Creature_Raptor_Desert talent tree.", MaxLevel: GetMaxLevelForType("DuneRaptor")),
+        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor that uses the Creature_Raptor mount talent tree.", MaxLevel: GetMaxLevelForType("DuneRaptor")),
         new("Draven", "Draven", "Mount_Chew", "BP_Mount_Chew_C", "Rideable draven with the Creature_Chew talent tree.", MaxLevel: GetMaxLevelForType("Draven")),
         new("Slinker", "Slinker", "Mount_Slinker", "BP_Mount_Slinker_C", "Rideable slinker with the Creature_Slinker talent tree.", MaxLevel: GetMaxLevelForType("Slinker"))
     ];
+
+    public static IReadOnlyList<CreatureAppearanceVariant> KnownAppearanceVariants { get; } =
+    [
+        new("Horse", "Brown Horse", "Mount_Horse_Standard_A1", "BP_Mount_Horse_Standard_C", 0, "Pet Companions"),
+        new("Horse", "Black Horse", "Mount_Horse_Standard_A2", "BP_Mount_Horse_Standard_C", 1, "Pet Companions"),
+        new("Horse", "White Horse", "Mount_Horse_Standard_A3", "BP_Mount_Horse_Standard_C", 2, "Pet Companions"),
+
+        new("Dog", "Golden Labrador", "Tame_Dog_A1", "BP_Tame_Dog_A1_C", 0, "Pet Companions"),
+        new("Dog", "Chocolate Labrador", "Tame_Dog_A2", "BP_Tame_Dog_A2_C", 1, "Pet Companions"),
+        new("Dog", "German Shepherd", "Tame_Dog_B1", "BP_Tame_Dog_B1_C", 0, "Pet Companions"),
+        new("Dog", "Panda German Shepherd", "Tame_Dog_B2", "BP_Tame_Dog_B2_C", 1, "Pet Companions"),
+        new("Dog", "Pug", "Tame_Dog_C1", "BP_Tame_Dog_C1_C", 0, "Pet Companions"),
+        new("Dog", "Tan Laika", "Tame_Dog_D1", "BP_Tame_Dog_D1_C", 0, "Pet Companions"),
+        new("Dog", "Brown Laika", "Tame_Dog_D2", "BP_Tame_Dog_D2_C", 1, "Pet Companions"),
+        new("Dog", "French Bulldog", "Tame_Dog_C2", "BP_Tame_Dog_C2_C", 1, "Homestead"),
+        new("Dog", "Border Collie", "Tame_Dog_E", "BP_Tame_Dog_E_C", 1, "Homestead"),
+
+        new("Cat", "Grey Tabby Cat", "Tame_Cat_A1", "BP_Tame_Cat_C", 0, "Pet Companions"),
+        new("Cat", "Orange Tabby Cat", "Tame_Cat_A2", "BP_Tame_Cat_C", 1, "Pet Companions"),
+        new("Cat", "Black Cat", "Tame_Cat_A3", "BP_Tame_Cat_C", 2, "Pet Companions"),
+        new("Cat", "Himalayan Seal Point Cat", "Tame_Cat_B", "BP_Tame_Cat_B_C", 2, "Homestead"),
+        new("Cat", "Tortoise Shell Ragdoll Cat", "Tame_Cat_C", "BP_Tame_Cat_C_C", 2, "Homestead")
+    ];
+
     private readonly JsonObject _root;
     private readonly List<IcarusMount> _mounts;
     private readonly UePropertySerializer _serializer = new();
@@ -374,6 +413,43 @@ internal sealed class IcarusMount
     public int Experience => GetIntProperty("Experience") ?? 0;
     public int? CurrentHealth => GetIntProperty("CurrentHealth");
     public int? Stamina => GetIntProperty("Stamina");
+    public int? FoodLevel => GetIntProperty("FoodLevel");
+    public int? WaterLevel => GetIntProperty("WaterLevel");
+    public int? OxygenLevel => GetIntProperty("OxygenLevel");
+    public int? Variation => GetIntProperty("Variation");
+    public int? UniqueVariation => GetIntProperty("UniqueVariation");
+    public int? CosmeticSkinIndex => GetActorIntVariable("CosmeticSkinIndex");
+    public int? AlternateCosmeticSkinIndex => GetActorIntVariable("CosmeticSkinIndex_0");
+    public string AppearanceLabel => GetAppearanceVariant()?.DisplayName ?? "";
+
+    public IReadOnlyList<CreatureAppearanceVariant> AppearanceVariants =>
+        IcarusMounts.KnownAppearanceVariants
+            .Where(variant => SameType(variant.TypeKey, MountType))
+            .ToList();
+
+    public CreatureAppearanceVariant? GetAppearanceVariant()
+    {
+        List<CreatureAppearanceVariant> variants = AppearanceVariants.ToList();
+        if (variants.Count == 0)
+        {
+            return null;
+        }
+
+        string aiSetupRowName = AiSetupRowName;
+        string actorClassName = ActorClassName;
+        int variation = Variation ?? 0;
+
+        return variants.FirstOrDefault(variant =>
+                SameRowName(variant.AiSetupRowName, aiSetupRowName)
+                && SameClassName(variant.BlueprintClassName, actorClassName))
+            ?? variants.FirstOrDefault(variant =>
+                SameClassName(variant.BlueprintClassName, actorClassName)
+                && variant.Variation == variation)
+            ?? variants.FirstOrDefault(variant =>
+                SameRowName(variant.AiSetupRowName, aiSetupRowName)
+                && variant.Variation == variation)
+            ?? variants.FirstOrDefault(variant => variant.Variation == variation);
+    }
 
     public string CreatureTreeRowName
     {
@@ -399,8 +475,9 @@ internal sealed class IcarusMount
                 ["BluebackDaisy"] = "Creature_Blueback",
                 ["Bull"] = "Creature_Bull",
                 ["Raptor"] = "Creature_Raptor",
-                ["DuneRaptor"] = "Creature_Raptor_Desert",
-                ["DesertRaptor"] = "Creature_Raptor_Desert",
+                ["DuneRaptor"] = "Creature_Raptor",
+                ["RaptorDesert"] = "Creature_Raptor",
+                ["DesertRaptor"] = "Creature_Raptor",
                 ["Draven"] = "Creature_Chew",
                 ["Chew"] = "Creature_Chew",
                 ["Slinker"] = "Creature_Slinker",
@@ -422,6 +499,46 @@ internal sealed class IcarusMount
     private static string NormalizeMountType(string mountType)
     {
         return new string(mountType.Where(char.IsLetterOrDigit).ToArray());
+    }
+
+    private static bool SameType(string left, string right)
+    {
+        return string.Equals(NormalizeMountType(left), NormalizeMountType(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SameRowName(string left, string right)
+    {
+        return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SameClassName(string left, string right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        string normalizedLeft = NormalizeClassName(left);
+        string normalizedRight = NormalizeClassName(right);
+        return string.Equals(normalizedLeft, normalizedRight, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeClassName(string className)
+    {
+        string normalized = className.Trim().Trim('\'', '"');
+        int slash = normalized.LastIndexOf('/');
+        if (slash >= 0)
+        {
+            normalized = normalized[(slash + 1)..];
+        }
+
+        int dot = normalized.LastIndexOf('.');
+        if (dot >= 0)
+        {
+            normalized = normalized[(dot + 1)..];
+        }
+
+        return normalized;
     }
 
     public IReadOnlyList<TalentEntry> Talents
@@ -467,6 +584,24 @@ internal sealed class IcarusMount
         Level = 0;
     }
 
+    public IReadOnlyList<CreatureGeneticEntry> Genetics
+    {
+        get
+        {
+            UePropertyTag? genetics = GetGeneticsProperty();
+            if (genetics is null)
+            {
+                return Array.Empty<CreatureGeneticEntry>();
+            }
+
+            return genetics.Nested
+                .Select(ReadGeneticEntry)
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
+                .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
+
     public IEnumerable<int> KnownIntegerIds()
     {
         if (int.TryParse(Root["MountIconName"]?.GetValue<string>(), out int iconId))
@@ -502,6 +637,81 @@ internal sealed class IcarusMount
         return $"{Name} ({MountType}, level {Level})";
     }
 
+    public void SetName(string name)
+    {
+        string cleaned = string.IsNullOrWhiteSpace(name) ? MountType : name.Trim();
+        Root["MountName"] = cleaned;
+        SetStringProperty("MountName", cleaned, "StrProperty");
+    }
+
+    public void SetSpecies(MountInjectionDefinition definition)
+    {
+        Root["MountType"] = definition.TypeKey;
+        SetStringProperty("AISetupRowName", definition.AiSetupRowName, "NameProperty");
+        SetStringProperty("ActorClassName", definition.BlueprintClassName, "NameProperty");
+        UpdateActorObjectNames(definition.BlueprintClassName);
+        Level = Math.Clamp(Level, 0, definition.MaxLevel);
+        ClearStructArray("Talents");
+    }
+
+    public void SetCurrentHealth(int value)
+    {
+        SetIntProperty("CurrentHealth", Math.Max(0, value));
+    }
+
+    public void SetStamina(int value)
+    {
+        SetIntProperty("Stamina", Math.Max(0, value));
+    }
+
+    public void SetFoodLevel(int value)
+    {
+        SetIntProperty("FoodLevel", Math.Max(0, value));
+    }
+
+    public void SetWaterLevel(int value)
+    {
+        SetIntProperty("WaterLevel", Math.Max(0, value));
+    }
+
+    public void SetOxygenLevel(int value)
+    {
+        SetIntProperty("OxygenLevel", Math.Max(0, value));
+    }
+
+    public void SetVariation(int value)
+    {
+        SetIntProperty("Variation", Math.Max(0, value));
+    }
+
+    public void SetAppearanceVariant(CreatureAppearanceVariant variant)
+    {
+        if (!SameType(variant.TypeKey, MountType))
+        {
+            return;
+        }
+
+        SetStringProperty("AISetupRowName", variant.AiSetupRowName, "NameProperty");
+        SetStringProperty("ActorClassName", variant.BlueprintClassName, "NameProperty");
+        UpdateActorObjectNames(variant.BlueprintClassName);
+        SetVariation(variant.Variation);
+    }
+
+    public void SetUniqueVariation(int value)
+    {
+        SetIntProperty("UniqueVariation", Math.Max(0, value));
+    }
+
+    public void SetCosmeticSkinIndex(int value)
+    {
+        SetActorIntVariable("CosmeticSkinIndex", value);
+    }
+
+    public void SetAlternateCosmeticSkinIndex(int value)
+    {
+        SetActorIntVariable("CosmeticSkinIndex_0", value);
+    }
+
     public void SetTalent(string rowName, int rank)
     {
         UePropertyTag talents = GetOrCreateTalentsProperty();
@@ -527,9 +737,34 @@ internal sealed class IcarusMount
         WriteTalentEntry(existing, rowName, rank);
     }
 
+    public void SetGeneticLevel(string name, int level)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        UePropertyTag genetics = GetOrCreateGeneticsProperty();
+        UePropertyTag? existing = genetics.Nested.FirstOrDefault(item =>
+            string.Equals(ReadGeneticEntry(item).Name, name, StringComparison.OrdinalIgnoreCase));
+
+        if (existing is null)
+        {
+            genetics.Nested.Add(CreateGeneticStruct(name, level));
+            return;
+        }
+
+        WriteGeneticEntry(existing, name, level);
+    }
+
     private UePropertyTag? GetTalentsProperty()
     {
         return UePropertySerializer.FindProperty(Properties, "Talents");
+    }
+
+    private UePropertyTag? GetGeneticsProperty()
+    {
+        return UePropertySerializer.FindProperty(Properties, "Genetics");
     }
 
     private UePropertyTag GetOrCreateTalentsProperty()
@@ -551,6 +786,27 @@ internal sealed class IcarusMount
         };
         Properties.Add(talents);
         return talents;
+    }
+
+    private UePropertyTag GetOrCreateGeneticsProperty()
+    {
+        UePropertyTag? genetics = GetGeneticsProperty();
+        if (genetics is not null)
+        {
+            genetics.InnerType = "StructProperty";
+            genetics.ElementName ??= "Genetics";
+            genetics.StructType ??= "MountGeneticsSaveData";
+            return genetics;
+        }
+
+        genetics = new UePropertyTag("Genetics", "ArrayProperty")
+        {
+            InnerType = "StructProperty",
+            ElementName = "Genetics",
+            StructType = "MountGeneticsSaveData"
+        };
+        Properties.Add(genetics);
+        return genetics;
     }
 
     private static void RemoveEmptyTalentEntries(UePropertyTag talents)
@@ -599,6 +855,45 @@ internal sealed class IcarusMount
         return element;
     }
 
+    private static CreatureGeneticEntry ReadGeneticEntry(UePropertyTag element)
+    {
+        string name = GetStringValue(element.Find("GeneticValueName"))
+            ?? GetStringValue(element.Find("Name"))
+            ?? "";
+        int value = GetIntValue(element.Find("Value"))
+            ?? GetIntValue(element.Find("LevelIndex"))
+            ?? GetIntValue(element.Find("Level"))
+            ?? 0;
+        return new CreatureGeneticEntry(name, value);
+    }
+
+    private static void WriteGeneticEntry(UePropertyTag element, string name, int value)
+    {
+        UePropertyTag nameProperty = element.Find("GeneticValueName")
+            ?? element.Find("Name")
+            ?? AddNested(element, new UePropertyTag("GeneticValueName", "NameProperty"));
+        nameProperty.TypeName = "NameProperty";
+        nameProperty.Value = name;
+
+        UePropertyTag valueProperty = element.Find("Value")
+            ?? element.Find("LevelIndex")
+            ?? element.Find("Level")
+            ?? AddNested(element, new UePropertyTag("Value", "IntProperty"));
+        valueProperty.Name = "Value";
+        valueProperty.TypeName = "IntProperty";
+        valueProperty.Value = Math.Max(0, value);
+    }
+
+    private static UePropertyTag CreateGeneticStruct(string name, int value)
+    {
+        UePropertyTag element = new("Genetics", "StructProperty")
+        {
+            StructType = "MountGeneticsSaveData"
+        };
+        WriteGeneticEntry(element, name, value);
+        return element;
+    }
+
     private void SetStringProperty(string name, string value, string typeName)
     {
         UePropertyTag? property = UePropertySerializer.FindProperty(Properties, name);
@@ -624,6 +919,43 @@ internal sealed class IcarusMount
     }
 
     private string BuildInjectedActorPath(string objectName)
+    {
+        string? existingPath = GetStringProperty("ActorPathName");
+        if (string.IsNullOrWhiteSpace(existingPath))
+        {
+            return objectName;
+        }
+
+        int lastDot = existingPath.LastIndexOf('.');
+        if (lastDot < 0)
+        {
+            return objectName;
+        }
+
+        return existingPath[..(lastDot + 1)] + objectName;
+    }
+
+    private void UpdateActorObjectNames(string blueprintClassName)
+    {
+        string existingObjectName = GetStringProperty("ObjectFName") ?? "";
+        string suffix = "";
+        int lastUnderscore = existingObjectName.LastIndexOf('_');
+        if (lastUnderscore >= 0 && lastUnderscore < existingObjectName.Length - 1)
+        {
+            suffix = existingObjectName[(lastUnderscore + 1)..];
+        }
+
+        if (string.IsNullOrWhiteSpace(suffix) || !suffix.All(char.IsDigit))
+        {
+            suffix = Random.Shared.Next(2147000000, int.MaxValue).ToString();
+        }
+
+        string objectName = $"{blueprintClassName}_{suffix}";
+        SetStringProperty("ObjectFName", objectName, "NameProperty");
+        SetStringProperty("ActorPathName", BuildActorPathForObject(objectName), "StrProperty");
+    }
+
+    private string BuildActorPathForObject(string objectName)
     {
         string? existingPath = GetStringProperty("ActorPathName");
         if (string.IsNullOrWhiteSpace(existingPath))

@@ -19,7 +19,7 @@ internal sealed class InjectMountDialog : Form
     public InjectMountDialog(IReadOnlyList<MountInjectionDefinition> definitions)
     {
         _definitions = definitions;
-        Text = "Inject Mount";
+        Text = "Inject Creature";
         MinimumSize = new Size(640, 420);
         Size = new Size(700, 480);
         StartPosition = FormStartPosition.CenterParent;
@@ -36,7 +36,7 @@ internal sealed class InjectMountDialog : Form
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         Controls.Add(root);
 
-        root.Controls.Add(new Label { Text = "Mount Type", Dock = DockStyle.Fill }, 0, 0);
+        root.Controls.Add(new Label { Text = "Creature Type", Dock = DockStyle.Fill }, 0, 0);
         root.Controls.Add(new Label { Text = "Details", Dock = DockStyle.Fill }, 1, 0);
 
         _mountTypeList.Dock = DockStyle.Fill;
