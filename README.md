@@ -22,7 +22,7 @@ Default profile location:
 - Ships with extracted talent catalog data in `data\`, then shows display names, trees, max ranks, and clamps known ranks.
 - Supports selected-rank editing, Reset Rank, Max Rank Selected, Max Rank All, and Reset All Ranks where applicable.
 - Limits rank spinner controls to the selected talent max rank so the up arrow cannot exceed known valid ranks.
-- Loads `Mounts.json`, lets you pick a station-stored creature, edit name, level, health, stamina, food, water, oxygen, phenotype variation values, cosmetic skin indexes, genetics, max level, and creature talent ranks.
+- Loads `Mounts.json`, lets you pick a station-stored creature, edit name, selectable lineage, level, health, stamina, food, water, oxygen, phenotype variation values, cosmetic skin indexes, genetics, max level, and creature talent ranks.
 - Supports Inject Creature by cloning an existing station creature when available, or by using a bundled station-mount template for empty or newly-created `Mounts.json` files.
 - Can inject supported station mount and companion creature types such as dog, cat, horse, moa, buffalo, tusker, terrenus, zebra, ubi, mammoth, farm animals, wolves, raptors, draven, slinker, and related variants.
 - Creates timestamped backups next to the original file before saving.
@@ -63,7 +63,7 @@ The Pet Editor tab edits station-stored animals saved in:
 
 Supported creature editing currently focuses on station-stored pets, mounts, and farm animals only. Animals deployed into an active prospect may be stored in prospect/world data and are out of scope for this editor.
 
-The app decodes and rewrites the UE4 serialized `RecorderBlob.BinaryData` structure used by station creatures. This enables editing creature talent ranks, genetics, phenotype variation values, cosmetic skin indexes, and common creature stats instead of doing unsafe byte/string replacement.
+The app decodes and rewrites the UE4 serialized `RecorderBlob.BinaryData` structure used by station creatures. This enables editing creature talent ranks, selectable lineage, genetics, phenotype variation values, cosmetic skin indexes, and common creature stats instead of doing unsafe byte/string replacement.
 
 If `Mounts.json` is missing for the selected player data folder, the app asks before preparing a new one. The file is created only when you click `Save`.
 

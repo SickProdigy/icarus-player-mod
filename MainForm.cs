@@ -11,6 +11,22 @@ namespace IcarusProfileMod;
 internal sealed class MainForm : Form
 {
     private const int CreatureGeneticMaxValue = 10;
+    private static readonly LineageChoice[] KnownCreatureLineages =
+    [
+        new("None", ""),
+        new("Wild", "Wild"),
+        new("Brave", "Brave"),
+        new("Careful", "Careful"),
+        new("Timid", "Timid"),
+        new("Bold", "Bold"),
+        new("Hardy", "Hardy"),
+        new("Stout", "Stout"),
+        new("Ambitious", "Ambitious"),
+        new("Resolute", "Resolute"),
+        new("Unstable", "Fierce"),
+        new("Savage", "Savage"),
+        new("Alpha", "Alpha")
+    ];
 
     private static readonly ResourcePreset[] ResourcePresets =
     [
@@ -88,6 +104,7 @@ internal sealed class MainForm : Form
     private readonly ComboBox _mountPicker = new();
     private readonly TextBox _mountNameText = new();
     private readonly TextBox _mountSpeciesText = new();
+    private readonly ComboBox _mountLineagePicker = new();
     private readonly NumericUpDown _mountLevelInput = new();
     private readonly NumericUpDown _mountHealthInput = new();
     private readonly NumericUpDown _mountStaminaInput = new();
@@ -103,12 +120,13 @@ internal sealed class MainForm : Form
     private readonly Button _maxMountLevelButton = new();
     private readonly TextBox _creatureTalentFilterText = new();
     private readonly DataGridView _creatureTalentsGrid = new();
-    private readonly DataGridView _creatureGeneticsGrid = new();
+    private readonly TableLayoutPanel _creatureGeneticsList = new();
     private readonly TextBox _creatureTalentRowNameText = new();
     private readonly NumericUpDown _creatureTalentRankInput = new();
     private bool _loadingMountSelection;
     private bool _loadingAppearanceVariants;
     private bool _updatingCreatureTalentEditor;
+    private bool _updatingCreatureGeneticsEditor;
     private readonly Button _maxCreatureTalentButton = new();
     private readonly Button _resetSelectedCreatureTalentButton = new();
     private readonly Button _maxAllCreatureTalentsButton = new();
@@ -533,7 +551,7 @@ internal sealed class MainForm : Form
         _talentMaxColumn.Width = 70;
         _talentMaxColumn.Visible = false;
         _talentsGrid.Columns.Add(_talentMaxColumn);
-        _talentsGrid.Columns.Add(new DataGridViewTextBoxColumn
+        _talentsGrid.Columns.Add(new DataGridViewNumericUpDownColumn
         {
             HeaderText = "Rank",
             DataPropertyName = nameof(TalentRow.Rank),
@@ -671,7 +689,7 @@ internal sealed class MainForm : Form
         _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Blueprint", DataPropertyName = nameof(TalentRow.DisplayName), ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
         _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Tier", DataPropertyName = nameof(TalentRow.TreeName), ReadOnly = true, Width = 220 });
         _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "RowName", DataPropertyName = nameof(TalentRow.RowName), ReadOnly = true, Width = 240 });
-        _blueprintsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
+        _blueprintsGrid.Columns.Add(new DataGridViewNumericUpDownColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
         _blueprintsGrid.SelectionChanged += (_, _) => FillBlueprintEditorFromSelection();
         _blueprintsGrid.CellEndEdit += (_, args) => CommitGridRank(_blueprintsGrid, args.RowIndex);
         root.Controls.Add(_blueprintsGrid, 0, 2);
@@ -797,7 +815,7 @@ internal sealed class MainForm : Form
 
     private Control BuildCreatureStatsPanel()
     {
-        TableLayoutPanel stats = new() { Dock = DockStyle.Top, ColumnCount = 5, RowCount = 4, Padding = new Padding(0, 10, 0, 0), AutoSize = true };
+        TableLayoutPanel stats = new() { Dock = DockStyle.Top, ColumnCount = 5, RowCount = 6, Padding = new Padding(0, 10, 0, 0), AutoSize = true };
         for (int i = 0; i < 5; i++)
         {
             stats.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
@@ -805,7 +823,9 @@ internal sealed class MainForm : Form
         stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 12));
+        stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        stats.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         stats.Controls.Add(new Label { Text = "Health", Dock = DockStyle.Fill }, 0, 0);
         stats.Controls.Add(new Label { Text = "Stamina", Dock = DockStyle.Fill }, 1, 0);
         stats.Controls.Add(new Label { Text = "Food", Dock = DockStyle.Fill }, 2, 0);
@@ -825,9 +845,15 @@ internal sealed class MainForm : Form
         stats.Controls.Add(_mountWaterInput, 3, 1);
         ConfigureCreatureNumber(_mountOxygenInput);
         stats.Controls.Add(_mountOxygenInput, 4, 1);
+        stats.Controls.Add(new Label { Text = "Lineage", Dock = DockStyle.Fill }, 0, 3);
+        _mountLineagePicker.Dock = DockStyle.Fill;
+        _mountLineagePicker.DropDownStyle = ComboBoxStyle.DropDownList;
+        PopulateLineagePicker();
+        stats.Controls.Add(_mountLineagePicker, 0, 4);
+        stats.SetColumnSpan(_mountLineagePicker, 3);
         ConfigureButton(_applyMountDetailsButton, "Apply Details");
         _applyMountDetailsButton.Click += (_, _) => ApplyMountDetails();
-        stats.Controls.Add(_applyMountDetailsButton, 3, 3);
+        stats.Controls.Add(_applyMountDetailsButton, 3, 4);
         stats.SetColumnSpan(_applyMountDetailsButton, 2);
         return stats;
     }
@@ -915,7 +941,7 @@ internal sealed class MainForm : Form
         _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Talent", DataPropertyName = nameof(TalentRow.DisplayName), ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
         _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "RowName", DataPropertyName = nameof(TalentRow.RowName), ReadOnly = true, Width = 250 });
         _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Max", DataPropertyName = nameof(TalentRow.MaxRankText), ReadOnly = true, Width = 70 });
-        _creatureTalentsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
+        _creatureTalentsGrid.Columns.Add(new DataGridViewNumericUpDownColumn { HeaderText = "Rank", DataPropertyName = nameof(TalentRow.Rank), Width = 80 });
         _creatureTalentsGrid.SelectionChanged += (_, _) => FillCreatureTalentEditorFromSelection();
         _creatureTalentsGrid.CellEndEdit += (_, args) => CommitCreatureGridRank(args.RowIndex);
         root.Controls.Add(_creatureTalentsGrid, 0, 1);
@@ -953,22 +979,26 @@ internal sealed class MainForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
 
-        _creatureGeneticsGrid.Dock = DockStyle.Fill;
-        _creatureGeneticsGrid.AllowUserToAddRows = false;
-        _creatureGeneticsGrid.AllowUserToDeleteRows = false;
-        _creatureGeneticsGrid.AutoGenerateColumns = false;
-        _creatureGeneticsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _creatureGeneticsGrid.MultiSelect = false;
-        ConfigureGrid(_creatureGeneticsGrid);
-        _creatureGeneticsGrid.DataSource = _creatureGeneticRows;
-        _creatureGeneticsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Genetic", DataPropertyName = nameof(CreatureGeneticRow.Name), ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-        _creatureGeneticsGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Value", DataPropertyName = nameof(CreatureGeneticRow.Value), Width = 110 });
-        _creatureGeneticsGrid.CellEndEdit += (_, args) => CommitCreatureGeneticGridLevel(args.RowIndex);
-        root.Controls.Add(_creatureGeneticsGrid, 0, 0);
+        Panel listHost = new()
+        {
+            AutoScroll = true,
+            Dock = DockStyle.Fill,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+        _creatureGeneticsList.Dock = DockStyle.Top;
+        _creatureGeneticsList.AutoSize = true;
+        _creatureGeneticsList.ColumnCount = 3;
+        _creatureGeneticsList.RowCount = 0;
+        _creatureGeneticsList.Padding = new Padding(8);
+        _creatureGeneticsList.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        _creatureGeneticsList.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        _creatureGeneticsList.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        listHost.Controls.Add(_creatureGeneticsList);
+        root.Controls.Add(listHost, 0, 0);
 
         Label note = new()
         {
-            Text = "Genetics use the saved Value field and are clamped from 0 to 10. Expected lineages are Vitality, Endurance, Muscle, Agility, Toughness, Hardiness, and Utility.",
+            Text = "Genetics use the saved Value field and are clamped from 0 to 10. Known genetic rows include Vitality, Endurance, Muscle, Agility, Toughness, Hardiness, and Utility. Lineage is a separate bloodline trait.",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -1019,6 +1049,46 @@ internal sealed class MainForm : Form
                 ? Path.GetFileName(path)
                 : $"{playerFolder}  /  {Path.GetFileName(path)}";
         };
+    }
+
+    private void PopulateLineagePicker()
+    {
+        _mountLineagePicker.Items.Clear();
+        foreach (LineageChoice lineage in KnownCreatureLineages)
+        {
+            _mountLineagePicker.Items.Add(lineage);
+        }
+        _mountLineagePicker.SelectedIndex = 0;
+    }
+
+    private void SelectLineage(string? lineage)
+    {
+        string cleaned = lineage?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(cleaned))
+        {
+            _mountLineagePicker.SelectedIndex = 0;
+            return;
+        }
+
+        for (int i = 0; i < _mountLineagePicker.Items.Count; i++)
+        {
+            if (_mountLineagePicker.Items[i] is LineageChoice item
+                && (string.Equals(item.SavedValue, cleaned, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(item.DisplayName, cleaned, StringComparison.OrdinalIgnoreCase)))
+            {
+                _mountLineagePicker.SelectedIndex = i;
+                return;
+            }
+        }
+
+        LineageChoice unknown = new(cleaned, cleaned);
+        _mountLineagePicker.Items.Add(unknown);
+        _mountLineagePicker.SelectedItem = unknown;
+    }
+
+    private string SelectedLineage()
+    {
+        return _mountLineagePicker.SelectedItem is LineageChoice selected ? selected.SavedValue : "";
     }
 
     private static void ConfigureGrid(DataGridView grid)
@@ -1283,6 +1353,7 @@ internal sealed class MainForm : Form
         _selectedMount = null;
         _mountNameText.Text = "";
         _mountSpeciesText.Text = "";
+        SelectLineage("");
         _mountLevelInput.Value = 0;
         _mountHealthInput.Value = 0;
         _mountStaminaInput.Value = 0;
@@ -1329,6 +1400,7 @@ internal sealed class MainForm : Form
             {
                 _mountNameText.Text = _selectedMount.Name;
                 _mountSpeciesText.Text = _selectedMount.MountType;
+                SelectLineage(_selectedMount.Lineage);
                 _mountLevelInput.Maximum = _selectedMount.MaxLevel;
                 _mountLevelInput.Value = Math.Clamp(_selectedMount.Level, 0, _selectedMount.MaxLevel);
                 _mountHealthInput.Value = Math.Clamp(_selectedMount.CurrentHealth ?? 0, 0, decimal.ToInt32(_mountHealthInput.Maximum));
@@ -1656,24 +1728,153 @@ internal sealed class MainForm : Form
         string appearance = string.IsNullOrWhiteSpace(_selectedMount.AppearanceLabel)
             ? "appearance unmapped"
             : _selectedMount.AppearanceLabel;
+        string lineage = string.IsNullOrWhiteSpace(_selectedMount.Lineage)
+            ? "lineage unset"
+            : $"lineage {_selectedMount.Lineage}";
         string catalog = _talentCatalog is null
             ? "catalog unavailable"
             : $"{_creatureTalentRows.Count} {treeRowName} talents";
-        _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.MountType} | {appearance} | {_selectedMount.AiSetupRowName} | XP {_selectedMount.Experience:N0} | HP {_selectedMount.CurrentHealth?.ToString() ?? "?"} | {catalog}";
+        _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.MountType} | {lineage} | {appearance} | {_selectedMount.AiSetupRowName} | XP {_selectedMount.Experience:N0} | HP {_selectedMount.CurrentHealth?.ToString() ?? "?"} | {catalog}";
     }
 
     private void RefreshCreatureGeneticRows()
     {
         _creatureGeneticRows.Clear();
+        _creatureGeneticsList.SuspendLayout();
+        _creatureGeneticsList.Controls.Clear();
+        _creatureGeneticsList.RowStyles.Clear();
+        _creatureGeneticsList.RowCount = 0;
+
+        if (_selectedMount is null)
+        {
+            _creatureGeneticsList.ResumeLayout();
+            return;
+        }
+
+        _updatingCreatureGeneticsEditor = true;
+        try
+        {
+            _creatureGeneticsList.RowCount = _selectedMount.Genetics.Count;
+            int rowIndex = 0;
+            foreach (CreatureGeneticEntry genetic in _selectedMount.Genetics)
+            {
+                _creatureGeneticRows.Add(new CreatureGeneticRow(genetic.Name, genetic.Value));
+                AddCreatureGeneticEditorRow(rowIndex, genetic);
+                rowIndex++;
+            }
+        }
+        finally
+        {
+            _updatingCreatureGeneticsEditor = false;
+            _creatureGeneticsList.ResumeLayout();
+        }
+    }
+
+    private void AddCreatureGeneticEditorRow(int rowIndex, CreatureGeneticEntry genetic)
+    {
+        _creatureGeneticsList.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        Label nameLabel = new()
+        {
+            Text = genetic.Name,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+
+        NumericUpDown valueInput = new()
+        {
+            Dock = DockStyle.Fill,
+            Minimum = 0,
+            Maximum = CreatureGeneticMaxValue,
+            Value = Math.Clamp(genetic.Value, 0, CreatureGeneticMaxValue),
+            Tag = genetic.Name
+        };
+        TrackBar valueSlider = new()
+        {
+            Dock = DockStyle.Fill,
+            Minimum = 0,
+            Maximum = CreatureGeneticMaxValue,
+            SmallChange = 1,
+            LargeChange = 1,
+            TickFrequency = 1,
+            Value = Math.Clamp(genetic.Value, 0, CreatureGeneticMaxValue),
+            Tag = valueInput
+        };
+        valueInput.Tag = valueSlider;
+        valueInput.ValueChanged += (_, _) => UpdateCreatureGeneticFromInput(genetic.Name, valueInput, valueSlider);
+        valueSlider.ValueChanged += (_, _) => UpdateCreatureGeneticFromSlider(genetic.Name, valueSlider, valueInput);
+
+        _creatureGeneticsList.Controls.Add(nameLabel, 0, rowIndex);
+        _creatureGeneticsList.Controls.Add(valueSlider, 1, rowIndex);
+        _creatureGeneticsList.Controls.Add(valueInput, 2, rowIndex);
+    }
+
+    private void UpdateCreatureGeneticFromInput(string geneticName, NumericUpDown input, TrackBar slider)
+    {
+        if (_updatingCreatureGeneticsEditor || _selectedMount is null)
+        {
+            return;
+        }
+
+        int value = Math.Clamp(decimal.ToInt32(input.Value), 0, CreatureGeneticMaxValue);
+        if (slider.Value != value)
+        {
+            _updatingCreatureGeneticsEditor = true;
+            try
+            {
+                slider.Value = value;
+            }
+            finally
+            {
+                _updatingCreatureGeneticsEditor = false;
+            }
+        }
+        UpdateCreatureGeneticValue(geneticName, value);
+    }
+
+    private void UpdateCreatureGeneticFromSlider(string geneticName, TrackBar slider, NumericUpDown input)
+    {
+        if (_updatingCreatureGeneticsEditor || _selectedMount is null)
+        {
+            return;
+        }
+
+        if (input.Value != slider.Value)
+        {
+            _updatingCreatureGeneticsEditor = true;
+            try
+            {
+                input.Value = slider.Value;
+            }
+            finally
+            {
+                _updatingCreatureGeneticsEditor = false;
+            }
+        }
+        UpdateCreatureGeneticValue(geneticName, slider.Value);
+    }
+
+    private void UpdateCreatureGeneticValue(string geneticName, int value)
+    {
         if (_selectedMount is null)
         {
             return;
         }
 
+        _selectedMount.SetGeneticLevel(geneticName, value);
         foreach (CreatureGeneticEntry genetic in _selectedMount.Genetics)
         {
-            _creatureGeneticRows.Add(new CreatureGeneticRow(genetic.Name, genetic.Value));
+            if (string.Equals(genetic.Name, geneticName, StringComparison.OrdinalIgnoreCase))
+            {
+                CreatureGeneticRow? row = _creatureGeneticRows.FirstOrDefault(item =>
+                    string.Equals(item.Name, geneticName, StringComparison.OrdinalIgnoreCase));
+                if (row is not null)
+                {
+                    row.Value = value;
+                }
+                break;
+            }
         }
+        SetStatus($"Set {geneticName} genetic value to {value}. Save to write Mounts.json.");
     }
 
     private void FillEditorFromSelection()
@@ -1697,7 +1898,7 @@ internal sealed class MainForm : Form
             if (selectedRows.Count == 0)
             {
                 _talentRowNameText.Text = "";
-                _talentRankInput.Maximum = 99;
+                ConfigureRankInput(_talentRankInput, 99, decimal.ToInt32(_talentRankInput.Value));
                 return;
             }
 
@@ -1728,7 +1929,7 @@ internal sealed class MainForm : Form
             if (selectedRows.Count == 0)
             {
                 _blueprintInfoLabel.Text = "";
-                _blueprintRankInput.Maximum = 99;
+                ConfigureRankInput(_blueprintRankInput, 99, decimal.ToInt32(_blueprintRankInput.Value));
                 return;
             }
 
@@ -1934,7 +2135,7 @@ internal sealed class MainForm : Form
             if (selectedRows.Count == 0)
             {
                 _creatureTalentRowNameText.Text = "";
-                _creatureTalentRankInput.Maximum = 99;
+                ConfigureRankInput(_creatureTalentRankInput, 99, decimal.ToInt32(_creatureTalentRankInput.Value));
                 return;
             }
 
@@ -1966,22 +2167,6 @@ internal sealed class MainForm : Form
         if (_creatureTalentsGrid.Rows[rowIndex].DataBoundItem is TalentRow row)
         {
             _selectedMount.SetTalent(row.RowName, ClampCreatureTalentRank(row.RowName, row.Rank));
-        }
-    }
-
-    private void CommitCreatureGeneticGridLevel(int rowIndex)
-    {
-        if (_selectedMount is null || rowIndex < 0 || rowIndex >= _creatureGeneticsGrid.Rows.Count)
-        {
-            return;
-        }
-
-        if (_creatureGeneticsGrid.Rows[rowIndex].DataBoundItem is CreatureGeneticRow row)
-        {
-            row.Value = Math.Clamp(row.Value, 0, CreatureGeneticMaxValue);
-            _selectedMount.SetGeneticLevel(row.Name, row.Value);
-            _creatureGeneticsGrid.Refresh();
-            SetStatus($"Set {row.Name} genetic value to {row.Value}. Save to write Mounts.json.");
         }
     }
 
@@ -2043,6 +2228,7 @@ internal sealed class MainForm : Form
         }
 
         _selectedMount.SetName(_mountNameText.Text);
+        _selectedMount.SetLineage(SelectedLineage());
         _selectedMount.SetCurrentHealth(decimal.ToInt32(_mountHealthInput.Value));
         _selectedMount.SetStamina(decimal.ToInt32(_mountStaminaInput.Value));
         _selectedMount.SetFoodLevel(decimal.ToInt32(_mountFoodInput.Value));
@@ -2548,10 +2734,10 @@ internal sealed class MainForm : Form
         try
         {
             _creatureTalentsGrid.EndEdit();
-            _creatureGeneticsGrid.EndEdit();
             if (_selectedMount is not null)
             {
                 _selectedMount.SetName(_mountNameText.Text);
+                _selectedMount.SetLineage(SelectedLineage());
                 _selectedMount.SetCurrentHealth(decimal.ToInt32(_mountHealthInput.Value));
                 _selectedMount.SetStamina(decimal.ToInt32(_mountStaminaInput.Value));
                 _selectedMount.SetFoodLevel(decimal.ToInt32(_mountFoodInput.Value));
@@ -2735,4 +2921,126 @@ internal sealed class CreatureGeneticRow
     public string Name { get; set; }
 
     public int Value { get; set; }
+}
+
+internal sealed class DataGridViewNumericUpDownColumn : DataGridViewColumn
+{
+    public DataGridViewNumericUpDownColumn()
+        : base(new DataGridViewNumericUpDownCell())
+    {
+    }
+}
+
+internal sealed class DataGridViewNumericUpDownCell : DataGridViewTextBoxCell
+{
+    public override Type EditType => typeof(DataGridViewNumericUpDownEditingControl);
+
+    public override Type ValueType => typeof(int);
+
+    public override object DefaultNewRowValue => 0;
+
+    public override void InitializeEditingControl(int rowIndex, object? initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
+    {
+        base.InitializeEditingControl(rowIndex, initialFormattedValue, dataGridViewCellStyle);
+        if (DataGridView?.EditingControl is not DataGridViewNumericUpDownEditingControl control)
+        {
+            return;
+        }
+
+        int maxRank = GetMaxRank(rowIndex);
+        control.Minimum = 0;
+        control.Maximum = maxRank;
+        control.DecimalPlaces = 0;
+        control.ThousandsSeparator = false;
+        control.Value = Math.Clamp(GetCellValue(), 0, maxRank);
+    }
+
+    private int GetMaxRank(int rowIndex)
+    {
+        if (DataGridView is not null
+            && rowIndex >= 0
+            && rowIndex < DataGridView.Rows.Count
+            && DataGridView.Rows[rowIndex].DataBoundItem is TalentRow row)
+        {
+            return Math.Clamp(row.MaxRank ?? 99, 0, 99);
+        }
+
+        return 99;
+    }
+
+    private int GetCellValue()
+    {
+        if (Value is int value)
+        {
+            return value;
+        }
+
+        return int.TryParse(Convert.ToString(Value), out int parsed) ? parsed : 0;
+    }
+}
+
+internal sealed class DataGridViewNumericUpDownEditingControl : NumericUpDown, IDataGridViewEditingControl
+{
+    public DataGridView? EditingControlDataGridView { get; set; }
+
+    public object EditingControlFormattedValue
+    {
+        get => decimal.ToInt32(Value).ToString();
+        set
+        {
+            if (int.TryParse(Convert.ToString(value), out int parsed))
+            {
+                Value = Math.Clamp(parsed, decimal.ToInt32(Minimum), decimal.ToInt32(Maximum));
+            }
+        }
+    }
+
+    public int EditingControlRowIndex { get; set; }
+
+    public bool EditingControlValueChanged { get; set; }
+
+    public Cursor EditingPanelCursor => Cursors.Default;
+
+    public bool RepositionEditingControlOnValueChange => false;
+
+    public void ApplyCellStyleToEditingControl(DataGridViewCellStyle dataGridViewCellStyle)
+    {
+        Font = dataGridViewCellStyle.Font;
+        ForeColor = dataGridViewCellStyle.ForeColor;
+        BackColor = dataGridViewCellStyle.BackColor;
+    }
+
+    public bool EditingControlWantsInputKey(Keys keyData, bool dataGridViewWantsInputKey)
+    {
+        Keys key = keyData & Keys.KeyCode;
+        return key is Keys.Up or Keys.Down or Keys.Left or Keys.Right or Keys.Home or Keys.End
+            || !dataGridViewWantsInputKey;
+    }
+
+    public object GetEditingControlFormattedValue(DataGridViewDataErrorContexts context)
+    {
+        return EditingControlFormattedValue;
+    }
+
+    public void PrepareEditingControlForEdit(bool selectAll)
+    {
+        if (selectAll)
+        {
+            Select(0, Text.Length);
+        }
+    }
+
+    protected override void OnValueChanged(EventArgs e)
+    {
+        EditingControlValueChanged = true;
+        EditingControlDataGridView?.NotifyCurrentCellDirty(true);
+        base.OnValueChanged(e);
+    }
+}
+
+internal sealed record LineageChoice(string DisplayName, string SavedValue)
+{
+    public override string ToString() => string.IsNullOrWhiteSpace(SavedValue) || string.Equals(DisplayName, SavedValue, StringComparison.OrdinalIgnoreCase)
+        ? DisplayName
+        : $"{DisplayName} ({SavedValue})";
 }

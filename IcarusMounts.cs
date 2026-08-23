@@ -420,6 +420,7 @@ internal sealed class IcarusMount
     public int? UniqueVariation => GetIntProperty("UniqueVariation");
     public int? CosmeticSkinIndex => GetActorIntVariable("CosmeticSkinIndex");
     public int? AlternateCosmeticSkinIndex => GetActorIntVariable("CosmeticSkinIndex_0");
+    public string Lineage => GetStringProperty("Lineage") ?? "";
     public string AppearanceLabel => GetAppearanceVariant()?.DisplayName ?? "";
 
     public IReadOnlyList<CreatureAppearanceVariant> AppearanceVariants =>
@@ -642,6 +643,11 @@ internal sealed class IcarusMount
         string cleaned = string.IsNullOrWhiteSpace(name) ? MountType : name.Trim();
         Root["MountName"] = cleaned;
         SetStringProperty("MountName", cleaned, "StrProperty");
+    }
+
+    public void SetLineage(string lineage)
+    {
+        SetStringProperty("Lineage", lineage.Trim(), "NameProperty");
     }
 
     public void SetSpecies(MountInjectionDefinition definition)
