@@ -45,7 +45,9 @@ internal static class ProfileFinder
         }
 
         return Directory
-            .EnumerateFiles(playerDataPath, fileName, SearchOption.AllDirectories)
+            .EnumerateDirectories(playerDataPath)
+            .Select(directory => Path.Combine(directory, fileName))
+            .Where(File.Exists)
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

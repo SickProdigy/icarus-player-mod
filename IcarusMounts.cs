@@ -24,39 +24,74 @@ internal sealed class IcarusMounts
 {
     private const string TemplateFileName = "MountTemplate.json";
 
+    private static readonly IReadOnlyDictionary<string, int> MaxLevelsByType = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Dog"] = 25,
+        ["Cat"] = 25,
+        ["Chicken"] = 25,
+        ["Rooster"] = 25,
+        ["Sheep"] = 25,
+        ["Ram"] = 25,
+        ["Cow"] = 25,
+        ["Pig"] = 25,
+        ["Wolf"] = 25,
+        ["SnowWolf"] = 25,
+        ["Hyena"] = 25,
+        ["MiniHippo"] = 50,
+        ["BluebackDaisy"] = 50,
+        ["Skulk"] = 25,
+        ["Storca"] = 25,
+        ["Gribbler"] = 25,
+        ["Terrenus"] = 50,
+        ["Horse"] = 50,
+        ["Moa"] = 50,
+        ["ArcticMoa"] = 50,
+        ["Buffalo"] = 50,
+        ["Tusker"] = 50,
+        ["Zebra"] = 50,
+        ["WoolyZebra"] = 50,
+        ["SwampBird"] = 50,
+        ["WoollyMammoth"] = 50,
+        ["Bull"] = 50,
+        ["Raptor"] = 50,
+        ["DuneRaptor"] = 50,
+        ["Draven"] = 50,
+        ["Slinker"] = 50
+    };
+
     public static IReadOnlyList<MountInjectionDefinition> SupportedInjectionTypes { get; } =
     [
-        new("Dog", "Dog", "Tame_Dog_D1", "BP_Tame_Dog_D1_C", "Companion pet with the Creature_Dog talent tree.", Rideable: false, MaxLevel: 25),
-        new("Cat", "Cat", "Tame_Cat_B1", "BP_Tame_Cat_B_C", "Companion pet with the Creature_Cat talent tree.", Rideable: false, MaxLevel: 25),
-        new("Chicken", "Chicken", "Chicken", "BP_Tame_Chicken_C", "Tamed farm animal with the Creature_Chicken talent tree.", Rideable: false, MaxLevel: 25),
-        new("Rooster", "Rooster", "Rooster", "BP_Tame_Rooster_C", "Tamed farm animal with the Creature_Rooster talent tree.", Rideable: false, MaxLevel: 25),
-        new("Sheep", "Sheep", "Sheep", "BP_Tame_Sheep_C", "Tamed farm animal with the Creature_Sheep talent tree.", Rideable: false, MaxLevel: 25),
-        new("Ram", "Ram", "Ram", "BP_Tame_Ram_C", "Tamed farm animal with the Creature_Ram talent tree.", Rideable: false, MaxLevel: 25),
-        new("Cow", "Cow", "Cow", "BP_Tame_Cow_C", "Tamed farm animal with the Creature_Cow talent tree.", Rideable: false, MaxLevel: 25),
-        new("Pig", "Pig", "Pig", "BP_Tame_Pig_C", "Tamed farm animal with the Creature_Pig talent tree.", Rideable: false, MaxLevel: 25),
-        new("Wolf", "Wolf", "Tamed_Forest_Wolf", "BP_Tamed_Wolf_C", "Tamed wolf with the Creature_Wolf talent tree.", Rideable: false, MaxLevel: 25),
-        new("SnowWolf", "Snow Wolf", "Tamed_Snow_Wolf", "BP_Tamed_Wolf_Snow_C", "Tamed snow wolf with the Creature_Snow_Wolf talent tree.", Rideable: false, MaxLevel: 25),
-        new("Hyena", "Hyena", "Tamed_Desert_Wolf", "BP_Tamed_Wolf_Desert_C", "Tamed desert wolf with the Creature_Desert_Wolf talent tree.", Rideable: false, MaxLevel: 25),
-        new("MiniHippo", "Mini Hippo", "Mini_Hippo_Quest", "BP_Mount_MiniHippo_Quest_C", "Companion creature using the station mount save format.", Rideable: false, MaxLevel: 25),
-        new("BluebackDaisy", "Blueback Daisy", "Quest_Blueback_Daisy", "BP_Mount_Blueback_Daisy_C", "Companion creature with the Creature_Blueback talent tree.", Rideable: false, MaxLevel: 25),
-        new("Skulk", "Skulk", "Tamed_Orka", "BP_Tamed_Orka_C", "Tamed skulk with the Creature_Orka talent tree.", Rideable: false, MaxLevel: 25),
-        new("Storca", "Storca", "Tamed_Storca", "BP_Tamed_Storca_C", "Tamed storca with the Creature_Storca talent tree.", Rideable: false, MaxLevel: 25),
-        new("Gribbler", "Gribbler", "Tamed_Tundra_Monkey", "BP_Tamed_Tundra_Monkey_C", "Tamed gribbler with the Creature_Tundra_Monkey talent tree.", Rideable: false, MaxLevel: 25),
-        new("Terrenus", "Terrenus", "Mount_Horse", "BP_Mount_Horse_C", "Wild alien mount.", MaxLevel: 50),
-        new("Horse", "Horse", "Mount_Horse_Standard_A3", "BP_Mount_Horse_Standard_C", "Workshop horse variant.", MaxLevel: 50),
-        new("Moa", "Moa", "Mount_Moa", "BP_Mount_Moa_C", "Fast rideable mount.", MaxLevel: 50),
-        new("ArcticMoa", "Arctic Moa", "Mount_Arctic_Moa", "BP_Mount_Arctic_Moa_C", "Cold-resistant moa variant.", MaxLevel: 50),
-        new("Buffalo", "Buffalo", "Mount_Buffalo", "BP_Mount_Buffalo_C", "Large carrying-capacity mount.", MaxLevel: 50),
-        new("Tusker", "Tusker", "Mount_Tusker", "BP_Mount_Tusker_C", "Large arctic mount.", MaxLevel: 50),
-        new("Zebra", "Zebra", "Mount_Zebra", "BP_Mount_Zebra_C", "Fast rideable mount.", MaxLevel: 50),
-        new("WoolyZebra", "Shaggy Zebra", "Mount_WoolyZebra", "BP_Mount_Wooly_Zebra_C", "Cold-resistant zebra variant.", MaxLevel: 50),
-        new("SwampBird", "Ubi", "Mount_SwampBird", "BP_Mount_SwampBird_C", "Swamp bird mount.", MaxLevel: 50),
-        new("WoollyMammoth", "Woolly Mammoth", "Mount_WoollyMammoth", "BP_Mount_WoollyMammoth_C", "Massive arctic mount.", MaxLevel: 50),
-        new("Bull", "Bull", "Mount_Bull", "BP_Mount_Bull_C", "Large rideable creature with the Creature_Bull talent tree.", MaxLevel: 50),
-        new("Raptor", "Raptor", "Mount_Raptor", "BP_Mount_Raptor_C", "Rideable raptor with the Creature_Raptor talent tree.", MaxLevel: 50),
-        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor with the Creature_Raptor_Desert talent tree.", MaxLevel: 50),
-        new("Draven", "Draven", "Mount_Chew", "BP_Mount_Chew_C", "Rideable draven with the Creature_Chew talent tree.", MaxLevel: 50),
-        new("Slinker", "Slinker", "Mount_Slinker", "BP_Mount_Slinker_C", "Rideable slinker with the Creature_Slinker talent tree.", MaxLevel: 50)
+        new("Dog", "Dog", "Tame_Dog_D1", "BP_Tame_Dog_D1_C", "Companion pet with the Creature_Dog talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Dog")),
+        new("Cat", "Cat", "Tame_Cat_B1", "BP_Tame_Cat_B_C", "Companion pet with the Creature_Cat talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Cat")),
+        new("Chicken", "Chicken", "Chicken", "BP_Tame_Chicken_C", "Tamed farm animal with the Creature_Chicken talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Chicken")),
+        new("Rooster", "Rooster", "Rooster", "BP_Tame_Rooster_C", "Tamed farm animal with the Creature_Rooster talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Rooster")),
+        new("Sheep", "Sheep", "Sheep", "BP_Tame_Sheep_C", "Tamed farm animal with the Creature_Sheep talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Sheep")),
+        new("Ram", "Ram", "Ram", "BP_Tame_Ram_C", "Tamed farm animal with the Creature_Ram talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Ram")),
+        new("Cow", "Cow", "Cow", "BP_Tame_Cow_C", "Tamed farm animal with the Creature_Cow talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Cow")),
+        new("Pig", "Pig", "Pig", "BP_Tame_Pig_C", "Tamed farm animal with the Creature_Pig talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Pig")),
+        new("Wolf", "Wolf", "Tamed_Forest_Wolf", "BP_Tamed_Wolf_C", "Tamed wolf with the Creature_Wolf talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Wolf")),
+        new("SnowWolf", "Snow Wolf", "Tamed_Snow_Wolf", "BP_Tamed_Wolf_Snow_C", "Tamed snow wolf with the Creature_Snow_Wolf talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("SnowWolf")),
+        new("Hyena", "Hyena", "Tamed_Desert_Wolf", "BP_Tamed_Wolf_Desert_C", "Tamed desert wolf with the Creature_Desert_Wolf talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Hyena")),
+        new("MiniHippo", "Mini Hippo", "Mini_Hippo_Quest", "BP_Mount_MiniHippo_Quest_C", "Companion creature using the station mount save format.", Rideable: false, MaxLevel: GetMaxLevelForType("MiniHippo")),
+        new("BluebackDaisy", "Blueback Daisy", "Quest_Blueback_Daisy", "BP_Mount_Blueback_Daisy_C", "Companion creature with the Creature_Blueback talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("BluebackDaisy")),
+        new("Skulk", "Skulk", "Tamed_Orka", "BP_Tamed_Orka_C", "Tamed skulk with the Creature_Orka talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Skulk")),
+        new("Storca", "Storca", "Tamed_Storca", "BP_Tamed_Storca_C", "Tamed storca with the Creature_Storca talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Storca")),
+        new("Gribbler", "Gribbler", "Tamed_Tundra_Monkey", "BP_Tamed_Tundra_Monkey_C", "Tamed gribbler with the Creature_Tundra_Monkey talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Gribbler")),
+        new("Terrenus", "Terrenus", "Mount_Horse", "BP_Mount_Horse_C", "Wild alien mount.", MaxLevel: GetMaxLevelForType("Terrenus")),
+        new("Horse", "Horse", "Mount_Horse_Standard_A3", "BP_Mount_Horse_Standard_C", "Workshop horse variant.", MaxLevel: GetMaxLevelForType("Horse")),
+        new("Moa", "Moa", "Mount_Moa", "BP_Mount_Moa_C", "Fast rideable mount.", MaxLevel: GetMaxLevelForType("Moa")),
+        new("ArcticMoa", "Arctic Moa", "Mount_Arctic_Moa", "BP_Mount_Arctic_Moa_C", "Cold-resistant moa variant.", MaxLevel: GetMaxLevelForType("ArcticMoa")),
+        new("Buffalo", "Buffalo", "Mount_Buffalo", "BP_Mount_Buffalo_C", "Large carrying-capacity mount.", MaxLevel: GetMaxLevelForType("Buffalo")),
+        new("Tusker", "Tusker", "Mount_Tusker", "BP_Mount_Tusker_C", "Large arctic mount.", MaxLevel: GetMaxLevelForType("Tusker")),
+        new("Zebra", "Zebra", "Mount_Zebra", "BP_Mount_Zebra_C", "Fast rideable mount.", MaxLevel: GetMaxLevelForType("Zebra")),
+        new("WoolyZebra", "Shaggy Zebra", "Mount_WoolyZebra", "BP_Mount_Wooly_Zebra_C", "Cold-resistant zebra variant.", MaxLevel: GetMaxLevelForType("WoolyZebra")),
+        new("SwampBird", "Ubi", "Mount_SwampBird", "BP_Mount_SwampBird_C", "Swamp bird mount.", MaxLevel: GetMaxLevelForType("SwampBird")),
+        new("WoollyMammoth", "Woolly Mammoth", "Mount_WoollyMammoth", "BP_Mount_WoollyMammoth_C", "Massive arctic mount.", MaxLevel: GetMaxLevelForType("WoollyMammoth")),
+        new("Bull", "Bull", "Mount_Bull", "BP_Mount_Bull_C", "Large rideable creature with the Creature_Bull talent tree.", MaxLevel: GetMaxLevelForType("Bull")),
+        new("Raptor", "Raptor", "Mount_Raptor", "BP_Mount_Raptor_C", "Rideable raptor with the Creature_Raptor talent tree.", MaxLevel: GetMaxLevelForType("Raptor")),
+        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor with the Creature_Raptor_Desert talent tree.", MaxLevel: GetMaxLevelForType("DuneRaptor")),
+        new("Draven", "Draven", "Mount_Chew", "BP_Mount_Chew_C", "Rideable draven with the Creature_Chew talent tree.", MaxLevel: GetMaxLevelForType("Draven")),
+        new("Slinker", "Slinker", "Mount_Slinker", "BP_Mount_Slinker_C", "Rideable slinker with the Creature_Slinker talent tree.", MaxLevel: GetMaxLevelForType("Slinker"))
     ];
     private readonly JsonObject _root;
     private readonly List<IcarusMount> _mounts;
@@ -71,6 +106,12 @@ internal sealed class IcarusMounts
 
     public string Path { get; }
     public IReadOnlyList<IcarusMount> Mounts => _mounts;
+
+    public static int GetMaxLevelForType(string mountType)
+    {
+        string normalized = new(mountType.Where(char.IsLetterOrDigit).ToArray());
+        return MaxLevelsByType.TryGetValue(normalized, out int maxLevel) ? maxLevel : 50;
+    }
 
     public static IcarusMounts Load(string path)
     {
@@ -325,11 +366,7 @@ internal sealed class IcarusMount
         }
     }
 
-    public int MaxLevel => NormalizeMountType(MountType) switch
-    {
-        "Dog" or "Cat" or "Chicken" or "Rooster" or "Sheep" or "Ram" or "Cow" or "Pig" or "Wolf" or "SnowWolf" or "Hyena" or "MiniHippo" or "BluebackDaisy" or "Skulk" or "Storca" or "Gribbler" => 25,
-        _ => 50
-    };
+    public int MaxLevel => IcarusMounts.GetMaxLevelForType(MountType);
 
     public string MountType => Root["MountType"]?.GetValue<string>() ?? "Unknown";
     public string ActorClassName => GetStringProperty("ActorClassName") ?? "";
