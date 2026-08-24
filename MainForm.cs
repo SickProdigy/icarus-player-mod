@@ -104,6 +104,7 @@ internal sealed class MainForm : Form
     private readonly ComboBox _mountPicker = new();
     private readonly TextBox _mountNameText = new();
     private readonly TextBox _mountSpeciesText = new();
+    private readonly TextBox _mountKindText = new();
     private readonly ComboBox _mountLineagePicker = new();
     private readonly NumericUpDown _mountLevelInput = new();
     private readonly NumericUpDown _mountHealthInput = new();
@@ -116,6 +117,8 @@ internal sealed class MainForm : Form
     private readonly NumericUpDown _mountCosmeticSkinInput = new();
     private readonly NumericUpDown _mountAltCosmeticSkinInput = new();
     private readonly ComboBox _mountBreedColorPicker = new();
+    private readonly Button _randomAppearanceButton = new();
+    private readonly Button _resetAppearanceButton = new();
     private readonly Button _applyMountDetailsButton = new();
     private readonly Button _maxMountLevelButton = new();
     private readonly TextBox _creatureTalentFilterText = new();
@@ -131,6 +134,8 @@ internal sealed class MainForm : Form
     private readonly Button _resetSelectedCreatureTalentButton = new();
     private readonly Button _maxAllCreatureTalentsButton = new();
     private readonly Button _resetCreatureTalentsButton = new();
+    private readonly Button _randomizeCreatureGeneticsButton = new();
+    private readonly Button _resetCreatureGeneticsButton = new();
     private readonly Label _mountInfoLabel = new();
     private readonly BindingList<TalentRow> _creatureTalentRows = new();
     private readonly BindingList<CreatureGeneticRow> _creatureGeneticRows = new();
@@ -145,6 +150,8 @@ internal sealed class MainForm : Form
     private bool _mountsTabActive;
     private bool _updatingTalentEditor;
     private bool _updatingBlueprintEditor;
+    private CreatureAppearanceSnapshot? _loadedAppearanceSnapshot;
+    private Dictionary<string, int> _loadedGeneticValues = new(StringComparer.OrdinalIgnoreCase);
 
     public MainForm()
     {
@@ -754,20 +761,22 @@ internal sealed class MainForm : Form
         _saveMountsButton.Click += (_, _) => SaveMountsFile();
         fileBar.Controls.Add(_saveMountsButton, 3, 1);
 
-        TableLayoutPanel selectorBar = new() { Dock = DockStyle.Fill, ColumnCount = 6, RowCount = 2, Padding = new Padding(0, 2, 0, 8) };
-        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
+        TableLayoutPanel selectorBar = new() { Dock = DockStyle.Fill, ColumnCount = 7, RowCount = 2, Padding = new Padding(0, 2, 0, 8) };
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
         selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240));
-        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
-        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 118));
-        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 136));
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 84));
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+        selectorBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         selectorBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
         selectorBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
         root.Controls.Add(selectorBar, 0, 1);
         selectorBar.Controls.Add(new Label { Text = "Creature", Dock = DockStyle.Fill }, 0, 0);
         selectorBar.Controls.Add(new Label { Text = "Name", Dock = DockStyle.Fill }, 1, 0);
         selectorBar.Controls.Add(new Label { Text = "Species", Dock = DockStyle.Fill }, 2, 0);
-        selectorBar.Controls.Add(new Label { Text = "Level", Dock = DockStyle.Fill }, 3, 0);
+        selectorBar.Controls.Add(new Label { Text = "Kind", Dock = DockStyle.Fill }, 3, 0);
+        selectorBar.Controls.Add(new Label { Text = "Level", Dock = DockStyle.Fill }, 4, 0);
         _mountPicker.Dock = DockStyle.Fill;
         _mountPicker.DropDownStyle = ComboBoxStyle.DropDownList;
         _mountPicker.SelectedIndexChanged += (_, _) => LoadSelectedMount();
@@ -777,16 +786,19 @@ internal sealed class MainForm : Form
         _mountSpeciesText.Dock = DockStyle.Fill;
         _mountSpeciesText.ReadOnly = true;
         selectorBar.Controls.Add(_mountSpeciesText, 2, 1);
+        _mountKindText.Dock = DockStyle.Fill;
+        _mountKindText.ReadOnly = true;
+        selectorBar.Controls.Add(_mountKindText, 3, 1);
         _mountLevelInput.Dock = DockStyle.Fill;
         _mountLevelInput.Maximum = 50;
-        selectorBar.Controls.Add(_mountLevelInput, 3, 1);
+        selectorBar.Controls.Add(_mountLevelInput, 4, 1);
         _mountLevelInput.ValueChanged += (_, _) => UpdateMountLevelFromInput();
         ConfigureButton(_maxMountLevelButton, "Max Level");
         _maxMountLevelButton.Click += (_, _) => MaxMountLevel();
-        selectorBar.Controls.Add(_maxMountLevelButton, 4, 1);
+        selectorBar.Controls.Add(_maxMountLevelButton, 5, 1);
         ConfigureButton(_injectMountButton, "Inject Creature");
         _injectMountButton.Click += (_, _) => InjectMount();
-        selectorBar.Controls.Add(_injectMountButton, 5, 1);
+        selectorBar.Controls.Add(_injectMountButton, 6, 1);
 
         TabControl petTabs = new() { Dock = DockStyle.Fill };
         root.Controls.Add(petTabs, 0, 2);
@@ -860,16 +872,18 @@ internal sealed class MainForm : Form
 
     private Control BuildCreatureAppearancePanel()
     {
-        TableLayoutPanel appearance = new() { Dock = DockStyle.Top, ColumnCount = 4, RowCount = 6, Padding = new Padding(0, 10, 0, 0), AutoSize = true };
+        TableLayoutPanel appearance = new() { Dock = DockStyle.Top, ColumnCount = 4, RowCount = 8, Padding = new Padding(0, 10, 0, 0), AutoSize = true };
         for (int i = 0; i < 4; i++)
         {
             appearance.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
         }
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
+        appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         appearance.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
         appearance.Controls.Add(new Label { Text = "Breed / Color", Dock = DockStyle.Fill }, 0, 0);
@@ -877,22 +891,39 @@ internal sealed class MainForm : Form
         _mountBreedColorPicker.DropDownStyle = ComboBoxStyle.DropDownList;
         _mountBreedColorPicker.SelectedIndexChanged += (_, _) => ApplySelectedAppearanceVariant();
         appearance.Controls.Add(_mountBreedColorPicker, 0, 1);
-        appearance.SetColumnSpan(_mountBreedColorPicker, 4);
+        appearance.SetColumnSpan(_mountBreedColorPicker, 3);
+        ConfigureButton(_randomAppearanceButton, "Random Breed / Color");
+        _randomAppearanceButton.Click += (_, _) => RandomizeKnownAppearanceVariant();
+        appearance.Controls.Add(_randomAppearanceButton, 3, 1);
 
-        appearance.Controls.Add(new Label { Text = "Variation", Dock = DockStyle.Fill }, 0, 2);
-        appearance.Controls.Add(new Label { Text = "Unique Variation", Dock = DockStyle.Fill }, 1, 2);
-        appearance.Controls.Add(new Label { Text = "Cosmetic Skin", Dock = DockStyle.Fill }, 2, 2);
-        appearance.Controls.Add(new Label { Text = "Alt Cosmetic Skin", Dock = DockStyle.Fill }, 3, 2);
+        Label experimentalNote = new()
+        {
+            Text = "Experimental: the raw variation and cosmetic skin fields below are still being mapped and may not match every creature.",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        appearance.Controls.Add(experimentalNote, 0, 2);
+        appearance.SetColumnSpan(experimentalNote, 4);
+
+        appearance.Controls.Add(new Label { Text = "Variation", Dock = DockStyle.Fill }, 0, 3);
+        appearance.Controls.Add(new Label { Text = "Unique Variation", Dock = DockStyle.Fill }, 1, 3);
+        appearance.Controls.Add(new Label { Text = "Cosmetic Skin", Dock = DockStyle.Fill }, 2, 3);
+        appearance.Controls.Add(new Label { Text = "Alt Cosmetic Skin", Dock = DockStyle.Fill }, 3, 3);
         ConfigureCreatureNumber(_mountVariationInput);
-        appearance.Controls.Add(_mountVariationInput, 0, 3);
+        appearance.Controls.Add(_mountVariationInput, 0, 4);
         ConfigureCreatureNumber(_mountUniqueVariationInput);
-        appearance.Controls.Add(_mountUniqueVariationInput, 1, 3);
+        appearance.Controls.Add(_mountUniqueVariationInput, 1, 4);
         ConfigureCreatureNumber(_mountCosmeticSkinInput);
         _mountCosmeticSkinInput.Minimum = -1;
-        appearance.Controls.Add(_mountCosmeticSkinInput, 2, 3);
+        appearance.Controls.Add(_mountCosmeticSkinInput, 2, 4);
         ConfigureCreatureNumber(_mountAltCosmeticSkinInput);
         _mountAltCosmeticSkinInput.Minimum = -1;
-        appearance.Controls.Add(_mountAltCosmeticSkinInput, 3, 3);
+        appearance.Controls.Add(_mountAltCosmeticSkinInput, 3, 4);
+
+        ConfigureButton(_resetAppearanceButton, "Reset Appearance");
+        _resetAppearanceButton.Click += (_, _) => ResetAppearanceToLoadedDefaults();
+        appearance.Controls.Add(_resetAppearanceButton, 2, 6);
+        appearance.SetColumnSpan(_resetAppearanceButton, 2);
 
         Label note = new()
         {
@@ -900,7 +931,7 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         };
-        appearance.Controls.Add(note, 0, 5);
+        appearance.Controls.Add(note, 0, 7);
         appearance.SetColumnSpan(note, 4);
         return appearance;
     }
@@ -977,7 +1008,7 @@ internal sealed class MainForm : Form
     {
         TableLayoutPanel root = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(0, 10, 0, 0) };
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
         Panel listHost = new()
         {
@@ -996,13 +1027,24 @@ internal sealed class MainForm : Form
         listHost.Controls.Add(_creatureGeneticsList);
         root.Controls.Add(listHost, 0, 0);
 
+        TableLayoutPanel footer = new() { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
         Label note = new()
         {
             Text = "Genetics use the saved Value field and are clamped from 0 to 10. Known genetic rows include Vitality, Endurance, Muscle, Agility, Toughness, Hardiness, and Utility. Lineage is a separate bloodline trait.",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         };
-        root.Controls.Add(note, 0, 1);
+        footer.Controls.Add(note, 0, 0);
+        ConfigureButton(_randomizeCreatureGeneticsButton, "Randomize Genetics");
+        _randomizeCreatureGeneticsButton.Click += (_, _) => RandomizeCreatureGenetics();
+        footer.Controls.Add(_randomizeCreatureGeneticsButton, 1, 0);
+        ConfigureButton(_resetCreatureGeneticsButton, "Reset Genetics");
+        _resetCreatureGeneticsButton.Click += (_, _) => ResetCreatureGeneticsToLoadedDefaults();
+        footer.Controls.Add(_resetCreatureGeneticsButton, 2, 0);
+        root.Controls.Add(footer, 0, 1);
         return root;
     }
 
@@ -1353,6 +1395,7 @@ internal sealed class MainForm : Form
         _selectedMount = null;
         _mountNameText.Text = "";
         _mountSpeciesText.Text = "";
+        _mountKindText.Text = "";
         SelectLineage("");
         _mountLevelInput.Value = 0;
         _mountHealthInput.Value = 0;
@@ -1366,6 +1409,9 @@ internal sealed class MainForm : Form
         _mountAltCosmeticSkinInput.Value = 0;
         _mountBreedColorPicker.Items.Clear();
         _mountBreedColorPicker.Enabled = false;
+        _randomAppearanceButton.Enabled = false;
+        _loadedAppearanceSnapshot = null;
+        _loadedGeneticValues.Clear();
         _creatureTalentRows.Clear();
         _creatureGeneticRows.Clear();
         _mountInfoLabel.Text = "";
@@ -1400,6 +1446,7 @@ internal sealed class MainForm : Form
             {
                 _mountNameText.Text = _selectedMount.Name;
                 _mountSpeciesText.Text = _selectedMount.MountType;
+                _mountKindText.Text = _selectedMount.CreatureKind;
                 SelectLineage(_selectedMount.Lineage);
                 _mountLevelInput.Maximum = _selectedMount.MaxLevel;
                 _mountLevelInput.Value = Math.Clamp(_selectedMount.Level, 0, _selectedMount.MaxLevel);
@@ -1412,6 +1459,7 @@ internal sealed class MainForm : Form
                 _mountUniqueVariationInput.Value = Math.Clamp(_selectedMount.UniqueVariation ?? 0, 0, decimal.ToInt32(_mountUniqueVariationInput.Maximum));
                 _mountCosmeticSkinInput.Value = Math.Clamp(_selectedMount.CosmeticSkinIndex ?? 0, decimal.ToInt32(_mountCosmeticSkinInput.Minimum), decimal.ToInt32(_mountCosmeticSkinInput.Maximum));
                 _mountAltCosmeticSkinInput.Value = Math.Clamp(_selectedMount.AlternateCosmeticSkinIndex ?? -1, decimal.ToInt32(_mountAltCosmeticSkinInput.Minimum), decimal.ToInt32(_mountAltCosmeticSkinInput.Maximum));
+                CaptureLoadedCreatureDefaults();
                 RefreshAppearanceVariantPicker();
             }
         }
@@ -1424,6 +1472,30 @@ internal sealed class MainForm : Form
         RefreshCreatureGeneticRows();
     }
 
+    private void CaptureLoadedCreatureDefaults()
+    {
+        if (_selectedMount is null)
+        {
+            _loadedAppearanceSnapshot = null;
+            _loadedGeneticValues.Clear();
+            return;
+        }
+
+        _loadedAppearanceSnapshot = new CreatureAppearanceSnapshot(
+            _selectedMount.AiSetupRowName,
+            _selectedMount.ActorClassName,
+            _selectedMount.Variation ?? 0,
+            _selectedMount.UniqueVariation ?? 0,
+            _selectedMount.CosmeticSkinIndex ?? 0,
+            _selectedMount.AlternateCosmeticSkinIndex ?? -1);
+        _loadedGeneticValues = _selectedMount.Genetics
+            .GroupBy(genetic => genetic.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => Math.Clamp(group.First().Value, 0, CreatureGeneticMaxValue),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
     private void RefreshAppearanceVariantPicker()
     {
         _loadingAppearanceVariants = true;
@@ -1433,11 +1505,13 @@ internal sealed class MainForm : Form
             if (_selectedMount is null)
             {
                 _mountBreedColorPicker.Enabled = false;
+                _randomAppearanceButton.Enabled = false;
                 return;
             }
 
             IReadOnlyList<CreatureAppearanceVariant> variants = _selectedMount.AppearanceVariants;
             _mountBreedColorPicker.Enabled = variants.Count > 0;
+            _randomAppearanceButton.Enabled = variants.Count > 0;
             foreach (CreatureAppearanceVariant variant in variants)
             {
                 _mountBreedColorPicker.Items.Add(variant);
@@ -1734,7 +1808,7 @@ internal sealed class MainForm : Form
         string catalog = _talentCatalog is null
             ? "catalog unavailable"
             : $"{_creatureTalentRows.Count} {treeRowName} talents";
-        _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.MountType} | {lineage} | {appearance} | {_selectedMount.AiSetupRowName} | XP {_selectedMount.Experience:N0} | HP {_selectedMount.CurrentHealth?.ToString() ?? "?"} | {catalog}";
+        _mountInfoLabel.Text = $"{_selectedMount.Name} | {_selectedMount.CreatureKind} | {_selectedMount.MountType} | {lineage} | {appearance} | {_selectedMount.AiSetupRowName} | XP {_selectedMount.Experience:N0} | HP {_selectedMount.CurrentHealth?.ToString() ?? "?"} | {catalog}";
     }
 
     private void RefreshCreatureGeneticRows()
@@ -1875,6 +1949,115 @@ internal sealed class MainForm : Form
             }
         }
         SetStatus($"Set {geneticName} genetic value to {value}. Save to write Mounts.json.");
+    }
+
+    private void RandomizeCreatureGenetics()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a creature first.");
+            return;
+        }
+
+        List<CreatureGeneticRow> rows = _creatureGeneticRows.ToList();
+        if (rows.Count == 0)
+        {
+            SetStatus("No genetics were available to randomize.");
+            return;
+        }
+
+        foreach (CreatureGeneticRow row in rows)
+        {
+            int value = Random.Shared.Next(0, CreatureGeneticMaxValue + 1);
+            row.Value = value;
+            _selectedMount.SetGeneticLevel(row.Name, value);
+        }
+
+        RefreshCreatureGeneticRows();
+        SetStatus($"Randomized {rows.Count:N0} genetic value(s) for {_selectedMount.Name}. Save to write Mounts.json.");
+    }
+
+    private void ResetAppearanceToLoadedDefaults()
+    {
+        if (_selectedMount is null || _loadedAppearanceSnapshot is null)
+        {
+            SetStatus("Load a creature first.");
+            return;
+        }
+
+        _selectedMount.RestoreAppearance(
+            _loadedAppearanceSnapshot.AiSetupRowName,
+            _loadedAppearanceSnapshot.ActorClassName,
+            _loadedAppearanceSnapshot.Variation,
+            _loadedAppearanceSnapshot.UniqueVariation,
+            _loadedAppearanceSnapshot.CosmeticSkinIndex,
+            _loadedAppearanceSnapshot.AlternateCosmeticSkinIndex);
+
+        _loadingMountSelection = true;
+        _loadingAppearanceVariants = true;
+        try
+        {
+            _mountVariationInput.Value = Math.Clamp(_loadedAppearanceSnapshot.Variation, 0, decimal.ToInt32(_mountVariationInput.Maximum));
+            _mountUniqueVariationInput.Value = Math.Clamp(_loadedAppearanceSnapshot.UniqueVariation, 0, decimal.ToInt32(_mountUniqueVariationInput.Maximum));
+            _mountCosmeticSkinInput.Value = Math.Clamp(_loadedAppearanceSnapshot.CosmeticSkinIndex, decimal.ToInt32(_mountCosmeticSkinInput.Minimum), decimal.ToInt32(_mountCosmeticSkinInput.Maximum));
+            _mountAltCosmeticSkinInput.Value = Math.Clamp(_loadedAppearanceSnapshot.AlternateCosmeticSkinIndex, decimal.ToInt32(_mountAltCosmeticSkinInput.Minimum), decimal.ToInt32(_mountAltCosmeticSkinInput.Maximum));
+            RefreshAppearanceVariantPicker();
+        }
+        finally
+        {
+            _loadingAppearanceVariants = false;
+            _loadingMountSelection = false;
+        }
+
+        UpdateMountInfoLabel();
+        SetStatus($"Reset {_selectedMount.Name} appearance to loaded values. Save to write Mounts.json.");
+    }
+
+    private void RandomizeKnownAppearanceVariant()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a creature first.");
+            return;
+        }
+
+        IReadOnlyList<CreatureAppearanceVariant> variants = _selectedMount.AppearanceVariants;
+        if (variants.Count == 0)
+        {
+            SetStatus("No known breed/color variants are mapped for this creature.");
+            return;
+        }
+
+        CreatureAppearanceVariant variant = variants[Random.Shared.Next(variants.Count)];
+        _selectedMount.SetAppearanceVariant(variant);
+        _mountSpeciesText.Text = _selectedMount.MountType;
+        _mountVariationInput.Value = Math.Clamp(_selectedMount.Variation ?? 0, 0, decimal.ToInt32(_mountVariationInput.Maximum));
+        RefreshAppearanceVariantPicker();
+        UpdateMountInfoLabel();
+        SetStatus($"Randomized {_selectedMount.Name} breed/color to {variant.DisplayName}. Save to write Mounts.json.");
+    }
+
+    private void ResetCreatureGeneticsToLoadedDefaults()
+    {
+        if (_selectedMount is null)
+        {
+            SetStatus("Load a creature first.");
+            return;
+        }
+
+        if (_loadedGeneticValues.Count == 0)
+        {
+            SetStatus("No loaded genetics were available to restore.");
+            return;
+        }
+
+        foreach ((string name, int value) in _loadedGeneticValues)
+        {
+            _selectedMount.SetGeneticLevel(name, value);
+        }
+
+        RefreshCreatureGeneticRows();
+        SetStatus($"Reset {_selectedMount.Name} genetics to loaded values. Save to write Mounts.json.");
     }
 
     private void FillEditorFromSelection()
@@ -2244,11 +2427,15 @@ internal sealed class MainForm : Form
         }
 
         int selectedIndex = _mountPicker.SelectedIndex;
+        CreatureAppearanceSnapshot? loadedAppearanceSnapshot = _loadedAppearanceSnapshot;
+        Dictionary<string, int> loadedGeneticValues = new(_loadedGeneticValues, StringComparer.OrdinalIgnoreCase);
         RefreshMountPicker();
         if (selectedIndex >= 0 && selectedIndex < _mountPicker.Items.Count)
         {
             _mountPicker.SelectedIndex = selectedIndex;
         }
+        _loadedAppearanceSnapshot = loadedAppearanceSnapshot;
+        _loadedGeneticValues = loadedGeneticValues;
         RefreshCreatureTalentRows();
         RefreshCreatureGeneticRows();
         SetStatus($"Updated {_selectedMount?.Name ?? "creature"} details. Save to write Mounts.json.");
@@ -2922,6 +3109,14 @@ internal sealed class CreatureGeneticRow
 
     public int Value { get; set; }
 }
+
+internal sealed record CreatureAppearanceSnapshot(
+    string AiSetupRowName,
+    string ActorClassName,
+    int Variation,
+    int UniqueVariation,
+    int CosmeticSkinIndex,
+    int AlternateCosmeticSkinIndex);
 
 internal sealed class DataGridViewNumericUpDownColumn : DataGridViewColumn
 {

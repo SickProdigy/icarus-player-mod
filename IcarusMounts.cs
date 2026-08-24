@@ -81,7 +81,7 @@ internal sealed class IcarusMounts
         new("Chicken", "Chicken", "Chicken", "BP_Tame_Chicken_C", "Tamed farm animal with the Creature_Chicken talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Chicken")),
         new("Rooster", "Rooster", "Rooster", "BP_Tame_Rooster_C", "Tamed farm animal with the Creature_Rooster talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Rooster")),
         new("Sheep", "Sheep", "Sheep", "BP_Tame_Sheep_C", "Tamed farm animal with the Creature_Sheep talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Sheep")),
-        new("Ram", "Ram", "Ram", "BP_Tame_Ram_C", "Tamed farm animal with the Creature_Ram talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Ram")),
+        new("Ram", "Ram", "Ram", "BP_Tame_Ram_C", "Tamed farm animal with the Creature_Sheep talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Ram")),
         new("Cow", "Cow", "Cow", "BP_Tame_Cow_C", "Tamed farm animal with the Creature_Cow talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Cow")),
         new("Pig", "Pig", "Pig", "BP_Tame_Pig_C", "Tamed farm animal with the Creature_Pig talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Pig")),
         new("Wolf", "Wolf", "Tamed_Forest_Wolf", "BP_Tamed_Wolf_C", "Tamed wolf with the Creature_Wolf talent tree.", Rideable: false, MaxLevel: GetMaxLevelForType("Wolf")),
@@ -104,7 +104,7 @@ internal sealed class IcarusMounts
         new("WoollyMammoth", "Woolly Mammoth", "Mount_WoollyMammoth", "BP_Mount_WoollyMammoth_C", "Massive arctic mount.", MaxLevel: GetMaxLevelForType("WoollyMammoth")),
         new("Bull", "Bull", "Mount_Bull", "BP_Mount_Bull_C", "Large rideable creature with the Creature_Bull talent tree.", MaxLevel: GetMaxLevelForType("Bull")),
         new("Raptor", "Raptor", "Mount_Raptor", "BP_Mount_Raptor_C", "Rideable raptor with the Creature_Raptor talent tree.", MaxLevel: GetMaxLevelForType("Raptor")),
-        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor that uses the Creature_Raptor mount talent tree.", MaxLevel: GetMaxLevelForType("DuneRaptor")),
+        new("DuneRaptor", "Dune Raptor", "Mount_Raptor_Desert", "BP_Mount_Raptor_Desert_C", "Rideable desert raptor that uses the Creature_Raptor_Desert mount talent tree.", MaxLevel: GetMaxLevelForType("DuneRaptor")),
         new("Draven", "Draven", "Mount_Chew", "BP_Mount_Chew_C", "Rideable draven with the Creature_Chew talent tree.", MaxLevel: GetMaxLevelForType("Draven")),
         new("Slinker", "Slinker", "Mount_Slinker", "BP_Mount_Slinker_C", "Rideable slinker with the Creature_Slinker talent tree.", MaxLevel: GetMaxLevelForType("Slinker"))
     ];
@@ -408,6 +408,7 @@ internal sealed class IcarusMount
     public int MaxLevel => IcarusMounts.GetMaxLevelForType(MountType);
 
     public string MountType => Root["MountType"]?.GetValue<string>() ?? "Unknown";
+    public string CreatureKind => GetCreatureKind(MountType);
     public string ActorClassName => GetStringProperty("ActorClassName") ?? "";
     public string AiSetupRowName => GetStringProperty("AISetupRowName") ?? "";
     public int Experience => GetIntProperty("Experience") ?? 0;
@@ -461,6 +462,7 @@ internal sealed class IcarusMount
             {
                 ["Dog"] = "Creature_Dog",
                 ["Cat"] = "Creature_Cat",
+                ["Ram"] = "Creature_Sheep",
                 ["Horse"] = "Creature_Horse",
                 ["Moa"] = "Creature_Moa",
                 ["ArcticMoa"] = "Creature_ArcticMoa",
@@ -476,9 +478,9 @@ internal sealed class IcarusMount
                 ["BluebackDaisy"] = "Creature_Blueback",
                 ["Bull"] = "Creature_Bull",
                 ["Raptor"] = "Creature_Raptor",
-                ["DuneRaptor"] = "Creature_Raptor",
-                ["RaptorDesert"] = "Creature_Raptor",
-                ["DesertRaptor"] = "Creature_Raptor",
+                ["DuneRaptor"] = "Creature_Raptor_Desert",
+                ["RaptorDesert"] = "Creature_Raptor_Desert",
+                ["DesertRaptor"] = "Creature_Raptor_Desert",
                 ["Draven"] = "Creature_Chew",
                 ["Chew"] = "Creature_Chew",
                 ["Slinker"] = "Creature_Slinker",
@@ -500,6 +502,63 @@ internal sealed class IcarusMount
     private static string NormalizeMountType(string mountType)
     {
         return new string(mountType.Where(char.IsLetterOrDigit).ToArray());
+    }
+
+    private static string GetCreatureKind(string mountType)
+    {
+        string type = NormalizeMountType(mountType);
+        HashSet<string> farmAnimals = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Chicken",
+            "Rooster",
+            "Sheep",
+            "Ram",
+            "Cow",
+            "Pig"
+        };
+        HashSet<string> companions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Dog",
+            "Cat",
+            "MiniHippo",
+            "BluebackDaisy"
+        };
+        HashSet<string> combatPets = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Wolf",
+            "SnowWolf",
+            "Hyena",
+            "DesertWolf",
+            "Skulk",
+            "Orka",
+            "Storca",
+            "Gribbler",
+            "TundraMonkey",
+            "Raptor",
+            "DuneRaptor",
+            "RaptorDesert",
+            "DesertRaptor",
+            "Draven",
+            "Chew",
+            "Slinker"
+        };
+
+        if (farmAnimals.Contains(type))
+        {
+            return "Farm Animal";
+        }
+
+        if (companions.Contains(type))
+        {
+            return "Companion";
+        }
+
+        if (combatPets.Contains(type))
+        {
+            return "Combat Pet";
+        }
+
+        return "Mount";
     }
 
     private static bool SameType(string left, string right)
@@ -688,6 +747,16 @@ internal sealed class IcarusMount
     public void SetVariation(int value)
     {
         SetIntProperty("Variation", Math.Max(0, value));
+    }
+
+    public void RestoreAppearance(string aiSetupRowName, string actorClassName, int variation, int uniqueVariation, int cosmeticSkinIndex, int alternateCosmeticSkinIndex)
+    {
+        SetStringProperty("AISetupRowName", aiSetupRowName, "NameProperty");
+        SetStringProperty("ActorClassName", actorClassName, "NameProperty");
+        SetVariation(variation);
+        SetUniqueVariation(uniqueVariation);
+        SetCosmeticSkinIndex(cosmeticSkinIndex);
+        SetAlternateCosmeticSkinIndex(alternateCosmeticSkinIndex);
     }
 
     public void SetAppearanceVariant(CreatureAppearanceVariant variant)
