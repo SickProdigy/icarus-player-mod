@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - IcarusProfileMod.csproj
+      - publish.ps1
+      - "**/*.cs"
+      - data/**
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish GitHub release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Read project version
+        id: version
+        shell: pwsh
+        run: |
+          $project = [xml](Get-Content -LiteralPath .\IcarusProfileMod.csproj)
+          $version = $project.Project.PropertyGroup.Version
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Could not read <Version> from IcarusProfileMod.csproj."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          "asset=IcarusProfileMod-v$version-win-x64.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Ensure version tag
+        id: tag
+        shell: pwsh
+        run: |
+          $tag = '${{ steps.version.outputs.tag }}'
+          git fetch --tags origin
+
+          $tagCommit = git rev-parse "$tag^{commit}" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Tag $tag already exists at $tagCommit; building the release from that tag."
+            "release_enabled=true" >> $env:GITHUB_OUTPUT
+            "release_ref=$tag" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a $tag -m "Icarus Profile Mod $tag" $env:GITHUB_SHA
+          git push origin $tag
+          "release_enabled=true" >> $env:GITHUB_OUTPUT
+          "release_ref=$env:GITHUB_SHA" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout release source
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: git checkout '${{ steps.tag.outputs.release_ref }}'
+
+      - name: Publish app
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: .\publish.ps1
+
+      - name: Package app
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: |
+          $asset = '${{ steps.version.outputs.asset }}'
+          $zipPath = Join-Path $PWD "artifacts\$asset"
+          if (Test-Path -LiteralPath $zipPath) {
+            Remove-Item -LiteralPath $zipPath
+          }
+
+          Compress-Archive `
+            -Path (Join-Path $PWD 'artifacts\win-x64\*') `
+            -DestinationPath $zipPath `
+            -CompressionLevel Optimal
+
+          "ZIP_PATH=$zipPath" >> $env:GITHUB_ENV
+
+      - name: Write release notes
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          @"
+          Windows x64 self-contained build for Icarus Profile Mod v$version.
+
+          Built automatically from the version in IcarusProfileMod.csproj.
+          "@ | Set-Content -LiteralPath .\release-notes.md
+
+      - name: Create or update GitHub release
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ steps.version.outputs.tag }}'
+          $asset = '${{ steps.version.outputs.asset }}'
+          $title = "Icarus Profile Mod $tag"
+
+          if (gh release view $tag *> $null) {
+            gh release upload $tag $env:ZIP_PATH --clobber
+            gh release edit $tag --title $title --notes-file .\release-notes.md --latest
+          } else {
+            gh release create $tag $env:ZIP_PATH --title $title --notes-file .\release-notes.md --latest
+          }
