@@ -135,7 +135,8 @@ jobs:
             return Invoke-RestMethod `
               -Method $Method `
               -Uri $Uri `
-              -Headers ($Headers + @{ 'Content-Type' = 'application/json' }) `
+              -Headers $Headers `
+              -ContentType 'application/json' `
               -Body ($Body | ConvertTo-Json -Depth 8)
           }
 
@@ -199,7 +200,8 @@ jobs:
             Invoke-RestMethod `
               -Method Post `
               -Uri "$uploadBase?name=$encodedAsset" `
-              -Headers ($headers + @{ 'Content-Type' = 'application/zip' }) `
+              -Headers $headers `
+              -ContentType 'application/zip' `
               -InFile $env:ZIP_PATH | Out-Null
 
             Write-Host "Published GitHub release $tag."
