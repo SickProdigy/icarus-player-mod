@@ -177,6 +177,7 @@ jobs:
               throw "GitHub release $tag did not contain expected asset $asset after upload."
             }
 
+            gh release edit $tag --title $title --notes-file .\release-notes.md --latest
             Write-Host "Uploaded GitHub asset $($uploadedAsset.name)."
             Write-Host "Published GitHub release $tag."
             exit 0
