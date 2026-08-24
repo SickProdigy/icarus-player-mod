@@ -92,6 +92,8 @@ jobs:
             -DestinationPath $zipPath `
             -CompressionLevel Optimal
 
+          $zip = Get-Item -LiteralPath $zipPath
+          Write-Host "Packaged $($zip.FullName) ($($zip.Length) bytes)."
           "ZIP_PATH=$zipPath" >> $env:GITHUB_ENV
 
       - name: Write release notes
@@ -101,6 +103,8 @@ jobs:
           $version = '${{ steps.version.outputs.version }}'
           @"
           Windows x64 self-contained build for Icarus Profile Mod v$version.
+
+          Download the attached IcarusProfileMod-v$version-win-x64.zip asset and extract it before running IcarusProfileMod.exe. The zip includes the required data folder.
 
           Built automatically from the version in IcarusProfileMod.csproj.
           "@ | Set-Content -LiteralPath .\release-notes.md
@@ -160,12 +164,20 @@ jobs:
 
           if ($server -match 'github\.com$') {
             if (gh release view $tag *> $null) {
-              gh release upload $tag $env:ZIP_PATH --clobber
               gh release edit $tag --title $title --notes-file .\release-notes.md --latest
             } else {
-              gh release create $tag $env:ZIP_PATH --title $title --notes-file .\release-notes.md --latest
+              gh release create $tag --title $title --notes-file .\release-notes.md --latest
             }
 
+            gh release upload $tag "$env:ZIP_PATH" --clobber
+            $releaseJson = gh release view $tag --json assets
+            $release = $releaseJson | ConvertFrom-Json
+            $uploadedAsset = @($release.assets | Where-Object { $_.name -eq $asset }) | Select-Object -First 1
+            if ($null -eq $uploadedAsset) {
+              throw "GitHub release $tag did not contain expected asset $asset after upload."
+            }
+
+            Write-Host "Uploaded GitHub asset $($uploadedAsset.name)."
             Write-Host "Published GitHub release $tag."
             exit 0
           }
