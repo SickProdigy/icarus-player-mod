@@ -109,6 +109,7 @@ jobs:
         if: steps.tag.outputs.release_enabled == 'true'
         shell: pwsh
         env:
+          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN_VALUE: ${{ github.token }}
           GITEA_TOKEN_VALUE: ${{ secrets.GITEA_TOKEN }}
         run: |
@@ -158,51 +159,12 @@ jobs:
           }
 
           if ($server -match 'github\.com$') {
-            if ([string]::IsNullOrWhiteSpace($env:GITHUB_TOKEN_VALUE)) {
-              throw "GITHUB_TOKEN was not available."
-            }
-
-            $headers = @{
-              Authorization = "Bearer $env:GITHUB_TOKEN_VALUE"
-              Accept = 'application/vnd.github+json'
-              'X-GitHub-Api-Version' = '2022-11-28'
-              'User-Agent' = 'icarus-player-mod-release'
-            }
-            $apiBase = "https://api.github.com/repos/$repo"
-            $release = Get-ReleaseOrNull -Uri "$apiBase/releases/tags/$tag" -Headers $headers
-
-            if ($null -eq $release) {
-              $release = Invoke-JsonRequest -Method Post -Uri "$apiBase/releases" -Headers $headers -Body @{
-                tag_name = $tag
-                target_commitish = $tag
-                name = $title
-                body = $notes
-                draft = $false
-                prerelease = $false
-                make_latest = 'true'
-              }
+            if (gh release view $tag *> $null) {
+              gh release upload $tag $env:ZIP_PATH --clobber
+              gh release edit $tag --title $title --notes-file .\release-notes.md --latest
             } else {
-              $release = Invoke-JsonRequest -Method Patch -Uri "$apiBase/releases/$($release.id)" -Headers $headers -Body @{
-                name = $title
-                body = $notes
-                draft = $false
-                prerelease = $false
-                make_latest = 'true'
-              }
-
-              $assets = Invoke-RestMethod -Method Get -Uri "$apiBase/releases/$($release.id)/assets" -Headers $headers
-              foreach ($existingAsset in @($assets | Where-Object { $_.name -eq $asset })) {
-                Invoke-RestMethod -Method Delete -Uri "$apiBase/releases/assets/$($existingAsset.id)" -Headers $headers | Out-Null
-              }
+              gh release create $tag $env:ZIP_PATH --title $title --notes-file .\release-notes.md --latest
             }
-
-            $uploadBase = ($release.upload_url -split '\{\?')[0]
-            Invoke-RestMethod `
-              -Method Post `
-              -Uri "$uploadBase?name=$encodedAsset" `
-              -Headers $headers `
-              -ContentType 'application/zip' `
-              -InFile $env:ZIP_PATH | Out-Null
 
             Write-Host "Published GitHub release $tag."
             exit 0
