@@ -7,10 +7,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>IcarusProfileMod</AssemblyName>
     <RootNamespace>IcarusProfileMod</RootNamespace>
-    <Version>1.1.7</Version>
-    <AssemblyVersion>1.1.7.0</AssemblyVersion>
-    <FileVersion>1.1.7.0</FileVersion>
-    <InformationalVersion>1.1.7</InformationalVersion>
+    <Version>1.1.8</Version>
+    <AssemblyVersion>1.1.8.0</AssemblyVersion>
+    <FileVersion>1.1.8.0</FileVersion>
+    <InformationalVersion>1.1.8</InformationalVersion>
     <Authors>sickprodigy</Authors>
     <Company>sickprodigy</Company>
     <Product>Icarus Profile Mod</Product>
@@ -25,6 +25,10 @@
   <ItemGroup>
     <AssemblyMetadata Include="Author" Value="$(Authors)" />
     <AssemblyMetadata Include="Website" Value="$(PackageProjectUrl)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="obj\publish-work\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

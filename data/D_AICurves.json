@@ -1,0 +1,2188 @@
+{
+    "/Game/Data/AI/Curves/C_AlphaMangeWolfHealth": {
+        "DefaultValue": 2500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_AlphaMangeWolfMeleeDamage": {
+        "DefaultValue": 80.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 80.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_AlphaWolfBossHealth": {
+        "DefaultValue": 5000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 5000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_AlphaWolfBossMeleeDamage": {
+        "DefaultValue": 40.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 40.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_AlphaWolfHealth": {
+        "DefaultValue": 1000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_AlphaWolfMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ApeHealth": {
+        "DefaultValue": 624.9999389648438,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.1,
+                "Value": 624.9999389648438
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ApeMeleeDamage": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ArcticScorpionHealth": {
+        "DefaultValue": 700.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.4,
+                "Value": 700.0
+            },
+            {
+                "Time": 30.4,
+                "Value": 949.9999389648438
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ArcticScorpionMeleeDamage": {
+        "DefaultValue": 80.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.1,
+                "Value": 80.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BabyDeerHealth": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BatDog_Health": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BatDog_MeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BatDog_WoundChance": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 19.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BatMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BearCubHealth": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BearCubMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BearHealth": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BearMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BeaverHealth": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BeaverMeleeDamage": {
+        "DefaultValue": 19.999996185302734,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 19.999996185302734
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BeeMeleeDamage": {
+        "DefaultValue": 15.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 15.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BeerDeepWoundChance": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 19.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Blueback_Health": {
+        "DefaultValue": 750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BoarHealth": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BoarMeleeDamage": {
+        "DefaultValue": 19.999996185302734,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 19.999996185302734
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BounderHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BuffaloHealth": {
+        "DefaultValue": 600.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 600.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_BuffaloMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ChewHealth": {
+        "DefaultValue": 2000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ChewHealth_Juvenile": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ChewMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ChewMeleeDamage_Juvenile": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ChickenHealth": {
+        "DefaultValue": 150.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 150.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_CrabHealth": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_CrabMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_CrocodileDeepWoundChance": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 19.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_CrocodileHealth": {
+        "DefaultValue": 600.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 600.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_CrocodileMeleeDamage": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_DinoLargeHealth": {
+        "DefaultValue": 1500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_DinoLargeMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_DragonFlyMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Drone_Carrier_Health": {
+        "DefaultValue": 4500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 4500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Drone_Health": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Drone_Hunter_Health": {
+        "DefaultValue": 400.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 400.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Drone_Scout_Health": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.0,
+                "Value": 1000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ElegantHorseHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ElegantHorseMeleeDamage": {
+        "DefaultValue": 25.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 25.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ElephantDamage": {
+        "DefaultValue": 40.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 40.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ElephantHealth": {
+        "DefaultValue": 2000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_FlightlessTankHealth": {
+        "DefaultValue": 7500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 7500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_FlightlessTankMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_FlyingTankHealth": {
+        "DefaultValue": 3800.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 3800.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_FlyingTankMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GhostCrocodileHealth": {
+        "DefaultValue": 2250.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2250.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GhostCrocodileMeleeDamage": {
+        "DefaultValue": 187.5,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 187.5
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GiantRoachElectricDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GiantRoachHealth": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GiantRoach_ElectroshockChance": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 19.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GiantTurtleHealth": {
+        "DefaultValue": 7500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 7500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_GiantTurtleMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Hammerhead_Slug_L_Damage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Hammerhead_Slug_M_Damage": {
+        "DefaultValue": 60.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 60.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Hammerhead_Slug_S_Damage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_HoppingCreatureMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_HoppingCreature_Health": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_HorseHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_HorseMeleeDamage": {
+        "DefaultValue": 25.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 25.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedAbominationHealth": {
+        "DefaultValue": 2812.5,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2812.5
+            },
+            {
+                "Time": 60.299999,
+                "Value": 5625.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedAbominationMeleeDamage": {
+        "DefaultValue": 150.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 150.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedMutationHealth": {
+        "DefaultValue": 2000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedMutationMeleeDamage": {
+        "DefaultValue": 90.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 90.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedProspectorHealth": {
+        "DefaultValue": 562.5,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 562.5
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_IrradiatedProspectorMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JaguarBlackHealth": {
+        "DefaultValue": 2500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JaguarBlackMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JaguarHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JaguarMeleeDamage": {
+        "DefaultValue": 90.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 90.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JaguarWoundChance": {
+        "DefaultValue": 5.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 5.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JuvenileRockGolemHealth": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_JuvenileRockGolemMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_KiwiHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_KiwiMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_KomodoBiteChance": {
+        "DefaultValue": 33.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 33.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_KomodoHealth": {
+        "DefaultValue": 550.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 550.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_KomodoMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LargeDeerHealth": {
+        "DefaultValue": 450.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 450.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaBroodlingHealth": {
+        "DefaultValue": 495.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 495.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 990.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaBroodlingMeleeDamage": {
+        "DefaultValue": 66.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 66.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaBroodlingWorldSpawnMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaBroodlingWorldSpawn_Health": {
+        "DefaultValue": 200.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            },
+            {
+                "Time": 75.0,
+                "Value": 360.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaHunterHealth": {
+        "DefaultValue": 35000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_LavaHunterMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MammothBossDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MammothBossHealth": {
+        "DefaultValue": 8000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 8000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MammothDamage": {
+        "DefaultValue": 40.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 40.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MammothHealth": {
+        "DefaultValue": 4000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 4000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MangeWolfHealth": {
+        "DefaultValue": 600.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 600.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MangeWolfMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MediumDeerHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MiniHippoHealth": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MiniHippoHealth_Quest": {
+        "DefaultValue": 150.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.2,
+                "Value": 150.0
+            },
+            {
+                "Time": 25.0,
+                "Value": 300.0
+            },
+            {
+                "Time": 35.0,
+                "Value": 350.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MiniHippoMeleeDamage": {
+        "DefaultValue": 19.999996185302734,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 19.999996185302734
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MiniHippoMeleeDamage_Horns": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MoaHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_MoaMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Buffalo_Health": {
+        "DefaultValue": 1400.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1400.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Buffalo_Stamina": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_ChewHealth": {
+        "DefaultValue": 2000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_ChewMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Chew_Stamina": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Horse_Health": {
+        "DefaultValue": 900.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 900.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Horse_MeleeDamage": {
+        "DefaultValue": 45.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 45.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Horse_Stamina": {
+        "DefaultValue": 325.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 325.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Mammoth_Health": {
+        "DefaultValue": 4200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 4200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Mammoth_MeleeDamage": {
+        "DefaultValue": 60.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 60.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Mammoth_Stamina": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Moa_Health": {
+        "DefaultValue": 700.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 700.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Moa_Stamina": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_RaptorHealth": {
+        "DefaultValue": 1750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_RaptorMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Raptor_Stamina": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_SlinkerHealth": {
+        "DefaultValue": 1750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_SlinkerMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Slinker_Stamina": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_SwampBird_Health": {
+        "DefaultValue": 750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_SwampBird_MeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Mount_Tusker_Health": {
+        "DefaultValue": 1500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_NeedlerHealth": {
+        "DefaultValue": 249.9999542236328,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 249.9999542236328
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_NeedlerMeleeDamage": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_OrkaHealth": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_OrkaMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PackWolfHealth": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PackWolfMeleeDamage": {
+        "DefaultValue": 20.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 20.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearBossHealth": {
+        "DefaultValue": 3000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 3000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearBossMeleeDamage": {
+        "DefaultValue": 350.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 350.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearCubHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearCubMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearHealth": {
+        "DefaultValue": 3000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 3000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_PolarBearMeleeDamage": {
+        "DefaultValue": 250.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 250.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RaptorHealth": {
+        "DefaultValue": 1500.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RaptorJuviHealth": {
+        "DefaultValue": 375.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 375.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RaptorJuviMeleeDamage": {
+        "DefaultValue": 37.5,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 37.5
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RaptorMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ReaverHealth": {
+        "DefaultValue": 1250.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1250.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ReaverMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RockDog_Health": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_RockDog_MeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SandScuttleHealth": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SandScuttleMeleeDamage": {
+        "DefaultValue": 20.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 20.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ScorpionBossHealth": {
+        "DefaultValue": 10000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 10000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ScorpionBossMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ScorpionHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_ScorpionMeleeDamage": {
+        "DefaultValue": 70.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 70.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SheepHealth": {
+        "DefaultValue": 350.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 350.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerHealth": {
+        "DefaultValue": 800.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 800.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerJungleHealth": {
+        "DefaultValue": 800.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 800.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerJungleMeleeDamage": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerJuvenileHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerJuvenileMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SlinkerMeleeDamage": {
+        "DefaultValue": 125.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 125.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SnowSlugArmor": {
+        "DefaultValue": 500.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 500.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SoldierFriendly_Health": {
+        "DefaultValue": 1000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SpiderHealth": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SpiderMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SpiderPoisonChance": {
+        "DefaultValue": 20.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 20.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SpiderPoisonDamage": {
+        "DefaultValue": 25.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 25.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StomperHealth": {
+        "DefaultValue": 900.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 900.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StomperMatriarchHealth": {
+        "DefaultValue": 2000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 2000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StomperMatriarchMeleeDamage": {
+        "DefaultValue": 150.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 150.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StomperMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StorcaHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StorcaMeleeDamage": {
+        "DefaultValue": 40.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 40.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StrikerHealth": {
+        "DefaultValue": 1750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_StrikerMeleeDamage": {
+        "DefaultValue": 75.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 75.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SulfurWormHealth": {
+        "DefaultValue": 1250.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1250.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SwampBirdHealth": {
+        "DefaultValue": 360.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 360.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SwampBirdMeleeDamage": {
+        "DefaultValue": 60.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 60.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SwampHoppingCreatureMeleeDamage": {
+        "DefaultValue": 35.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 35.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SwampSlugHealth": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_SwampSlugMeleeDamage": {
+        "DefaultValue": 60.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 60.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Boar_Health": {
+        "DefaultValue": 750.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Boar_MeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Dog_Health": {
+        "DefaultValue": 650.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 650.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Dog_MeleeDamage": {
+        "DefaultValue": 45.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 45.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Kiwi_Health": {
+        "DefaultValue": 700.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 700.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Kiwi_MeleeDamage": {
+        "DefaultValue": 65.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 65.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Orka_Health": {
+        "DefaultValue": 700.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 700.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Orka_MeleeDamage": {
+        "DefaultValue": 65.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 65.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Storca_Health": {
+        "DefaultValue": 700.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 700.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Storca_MeleeDamage": {
+        "DefaultValue": 65.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 65.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_TundraMonkeyMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_TundraMonkey_Health": {
+        "DefaultValue": 650.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 650.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Wolf_Health": {
+        "DefaultValue": 700.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 700.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_Tame_Wolf_MeleeDamage": {
+        "DefaultValue": 65.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 65.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TundraDeerHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TundraMonkeyHealth": {
+        "DefaultValue": 130.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 130.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TundraMonkeyMeleeDamage": {
+        "DefaultValue": 19.999996185302734,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 19.999996185302734
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TurtleDuckHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TurtleDuckMeleeDamage": {
+        "DefaultValue": 30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TurtleFishHealth": {
+        "DefaultValue": 750.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 750.0
+            },
+            {
+                "Time": 60.299999,
+                "Value": 1500.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TurtleFishMeleeDamage": {
+        "DefaultValue": 100.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 100.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TuskerHealth": {
+        "DefaultValue": 800.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 800.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_TuskerMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_WolfHealth": {
+        "DefaultValue": 200.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 200.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_WolfJuvenileHealth": {
+        "DefaultValue": 300.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 300.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_WolfMeleeDamage": {
+        "DefaultValue": 50.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 50.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_WolfWoundChance": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 19.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_WoolyZebra_Health": {
+        "DefaultValue": 1400.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1400.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_YetiHealth": {
+        "DefaultValue": 4000.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 4000.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Curves/C_YetiMeleeDamage": {
+        "DefaultValue": 120.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 120.0
+            }
+        ]
+    }
+}

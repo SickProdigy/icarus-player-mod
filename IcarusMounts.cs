@@ -35,9 +35,54 @@ internal sealed record CreatureAppearanceVariant(
 
 internal sealed record CreatureGeneticEntry(string Name, int Value);
 
+internal readonly record struct CreatureStarterStats(int? Health, int? Stamina, int? Food, int? Water, int? Oxygen);
+
+internal sealed record CreatureCurveKey(double Time, double Value);
+
+internal sealed record CreatureCurve(double DefaultValue, IReadOnlyList<CreatureCurveKey> Keys)
+{
+    public int Evaluate(int level)
+    {
+        if (Keys.Count == 0)
+        {
+            return (int)Math.Round(DefaultValue);
+        }
+
+        if (Keys.Count == 1 || level <= Keys[0].Time)
+        {
+            return (int)Math.Round(Keys[0].Value);
+        }
+
+        for (int i = 1; i < Keys.Count; i++)
+        {
+            CreatureCurveKey previous = Keys[i - 1];
+            CreatureCurveKey next = Keys[i];
+            if (level > next.Time)
+            {
+                continue;
+            }
+
+            double range = next.Time - previous.Time;
+            if (range <= 0)
+            {
+                return (int)Math.Round(next.Value);
+            }
+
+            double amount = (level - previous.Time) / range;
+            return (int)Math.Round(previous.Value + ((next.Value - previous.Value) * amount));
+        }
+
+        return (int)Math.Round(Keys[^1].Value);
+    }
+}
+
 internal sealed class IcarusMounts
 {
     private const string TemplateFileName = "MountTemplate.json";
+    private const string AiSetupDataFileName = "D_AISetup.json";
+    private const string AiGrowthDataFileName = "D_AIGrowth.json";
+    private const string AiCurvesDataFileName = "D_AICurves.json";
+    private const string MountDataFileName = "D_Mounts.json";
 
     private static readonly IReadOnlyDictionary<string, int> MaxLevelsByType = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
     {
@@ -73,6 +118,38 @@ internal sealed class IcarusMounts
         ["Draven"] = 50,
         ["Slinker"] = 50
     };
+
+    private static readonly IReadOnlyDictionary<string, int> FallbackAppearanceVariationCountsByType = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Buffalo"] = 8,
+        ["Moa"] = 8,
+        ["SwampBird"] = 8,
+        ["Ubi"] = 8,
+        ["Tusker"] = 7,
+        ["Wolf"] = 8,
+        ["Raptor"] = 8,
+        ["DuneRaptor"] = 8,
+        ["RaptorDesert"] = 8,
+        ["DesertRaptor"] = 8,
+        ["Slinker"] = 8,
+        ["Storca"] = 8,
+        ["Skulk"] = 8,
+        ["Orka"] = 8,
+        ["Gribbler"] = 8,
+        ["TundraMonkey"] = 8
+    };
+
+    private static readonly Lazy<IReadOnlyDictionary<string, int>> AppearanceVariationCountsByType = new(LoadAppearanceVariationCounts);
+    private static readonly Lazy<IReadOnlyDictionary<string, CreatureStarterStatSource>> StarterStatsByAiSetup = new(LoadStarterStatsByAiSetup);
+    private static readonly Lazy<IReadOnlyDictionary<string, CreatureCurve>> AiCurveValues = new(LoadAiCurveValues);
+
+    private sealed record CreatureStarterStatSource(
+        string? HealthCurve,
+        int? Stamina,
+        string? StaminaCurve,
+        int? Food,
+        int? Water,
+        int? Oxygen);
 
     public static IReadOnlyList<MountInjectionDefinition> SupportedInjectionTypes { get; } =
     [
@@ -150,6 +227,395 @@ internal sealed class IcarusMounts
     {
         string normalized = new(mountType.Where(char.IsLetterOrDigit).ToArray());
         return MaxLevelsByType.TryGetValue(normalized, out int maxLevel) ? maxLevel : 50;
+    }
+
+    public static int GetAppearanceVariationCountForType(string mountType)
+    {
+        string normalized = new(mountType.Where(char.IsLetterOrDigit).ToArray());
+        return AppearanceVariationCountsByType.Value.TryGetValue(normalized, out int count) ? count : 0;
+    }
+
+    private static IReadOnlyDictionary<string, int> LoadAppearanceVariationCounts()
+    {
+        Dictionary<string, int> counts = new(FallbackAppearanceVariationCountsByType, StringComparer.OrdinalIgnoreCase);
+
+        foreach (string dataPath in GetDataFilePaths(MountDataFileName))
+        {
+            if (!File.Exists(dataPath))
+            {
+                continue;
+            }
+
+            try
+            {
+                JsonNode? node = JsonNode.Parse(File.ReadAllText(dataPath));
+                if (node?["Rows"] is not JsonArray rows)
+                {
+                    continue;
+                }
+
+                foreach (JsonNode? rowNode in rows)
+                {
+                    if (rowNode is not JsonObject row)
+                    {
+                        continue;
+                    }
+
+                    string? name = row["Name"]?.GetValue<string>();
+                    int? variationCount = (row["Variations"] as JsonArray)?.Count;
+                    if (string.IsNullOrWhiteSpace(name) || variationCount is null or <= 0)
+                    {
+                        continue;
+                    }
+
+                    AddAppearanceVariationCount(counts, name, variationCount.Value);
+
+                    string? aiSetupRow = row["AISetup"]?["RowName"]?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(aiSetupRow))
+                    {
+                        AddAppearanceVariationCount(counts, aiSetupRow, variationCount.Value);
+                    }
+                }
+
+                AddAppearanceVariationAliases(counts);
+                return counts;
+            }
+            catch (IOException)
+            {
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        AddAppearanceVariationAliases(counts);
+        return counts;
+    }
+
+    private static void AddAppearanceVariationCount(Dictionary<string, int> counts, string key, int value)
+    {
+        counts[NormalizeAppearanceKey(key)] = value;
+    }
+
+    private static void AddAppearanceVariationAliases(Dictionary<string, int> counts)
+    {
+        AddAlias(counts, "SwampBird", "Ubi");
+        AddAlias(counts, "Raptor_Desert", "DuneRaptor");
+        AddAlias(counts, "Raptor_Desert", "RaptorDesert");
+        AddAlias(counts, "Raptor_Desert", "DesertRaptor");
+        AddAlias(counts, "Orka", "Skulk");
+        AddAlias(counts, "Tundra_Monkey", "Gribbler");
+    }
+
+    private static void AddAlias(Dictionary<string, int> counts, string sourceKey, string aliasKey)
+    {
+        if (counts.TryGetValue(NormalizeAppearanceKey(sourceKey), out int count))
+        {
+            counts[NormalizeAppearanceKey(aliasKey)] = count;
+        }
+    }
+
+    private static string NormalizeAppearanceKey(string key)
+    {
+        return new string(key.Where(char.IsLetterOrDigit).ToArray());
+    }
+
+    internal static CreatureStarterStats GetStarterStats(MountInjectionDefinition definition, int level = 0)
+    {
+        return GetStarterStats(definition.TypeKey, definition.AiSetupRowName, level);
+    }
+
+    internal static CreatureStarterStats GetStarterStats(string typeKey, string aiSetupRowName, int level)
+    {
+        CreatureStarterStats fallback = GetFallbackStarterStats(typeKey);
+        string normalizedAiSetup = NormalizeAppearanceKey(aiSetupRowName);
+
+        if (!StarterStatsByAiSetup.Value.TryGetValue(normalizedAiSetup, out CreatureStarterStatSource? dataStats))
+        {
+            return fallback;
+        }
+
+        return new CreatureStarterStats(
+            GetCurveValue(dataStats.HealthCurve, level) ?? fallback.Health,
+            dataStats.Stamina ?? GetCurveValue(dataStats.StaminaCurve, level) ?? fallback.Stamina,
+            dataStats.Food ?? fallback.Food,
+            dataStats.Water ?? fallback.Water,
+            dataStats.Oxygen ?? fallback.Oxygen);
+    }
+
+    private static CreatureStarterStats GetFallbackStarterStats(string typeKey)
+    {
+        string type = NormalizeAppearanceKey(typeKey);
+        HashSet<string> farmAnimals = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Chicken",
+            "Rooster",
+            "Sheep",
+            "Ram",
+            "Cow",
+            "Pig"
+        };
+        HashSet<string> companions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Dog",
+            "Cat",
+            "MiniHippo",
+            "BluebackDaisy"
+        };
+        HashSet<string> combatPets = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Wolf",
+            "SnowWolf",
+            "Hyena",
+            "DesertWolf",
+            "Skulk",
+            "Orka",
+            "Storca",
+            "Gribbler",
+            "TundraMonkey",
+            "Raptor",
+            "DuneRaptor",
+            "RaptorDesert",
+            "DesertRaptor",
+            "Draven",
+            "Chew",
+            "Slinker"
+        };
+
+        if (farmAnimals.Contains(type))
+        {
+            return new CreatureStarterStats(300, 0, 200, 200, 0);
+        }
+
+        if (companions.Contains(type))
+        {
+            return new CreatureStarterStats(450, 0, 200, 200, 0);
+        }
+
+        if (combatPets.Contains(type))
+        {
+            return new CreatureStarterStats(900, 0, 200, 200, 0);
+        }
+
+        return new CreatureStarterStats(1200, 0, 300, 300, 300);
+    }
+
+    private static IReadOnlyDictionary<string, CreatureStarterStatSource> LoadStarterStatsByAiSetup()
+    {
+        Dictionary<string, CreatureStarterStatSource> statsByAiSetup = new(StringComparer.OrdinalIgnoreCase);
+
+        JsonArray? aiSetupRows = LoadDataRows(AiSetupDataFileName);
+        JsonArray? aiGrowthRows = LoadDataRows(AiGrowthDataFileName);
+        if (aiSetupRows is null || aiGrowthRows is null)
+        {
+            return statsByAiSetup;
+        }
+
+        Dictionary<string, JsonObject> growthByName = new(StringComparer.OrdinalIgnoreCase);
+        foreach (JsonNode? growthNode in aiGrowthRows)
+        {
+            if (growthNode is JsonObject growth && growth["Name"]?.GetValue<string>() is string growthName)
+            {
+                growthByName[growthName] = growth;
+            }
+        }
+
+        foreach (JsonNode? setupNode in aiSetupRows)
+        {
+            if (setupNode is not JsonObject setup || setup["Name"]?.GetValue<string>() is not string setupName)
+            {
+                continue;
+            }
+
+            string? growthName = setup["AIGrowth"]?["RowName"]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(growthName) || !growthByName.TryGetValue(growthName, out JsonObject? growth))
+            {
+                continue;
+            }
+
+            JsonObject? baseStats = growth["Base"] as JsonObject;
+            if (baseStats is null)
+            {
+                continue;
+            }
+
+            statsByAiSetup[NormalizeAppearanceKey(setupName)] = new CreatureStarterStatSource(
+                HealthCurve: NormalizeCurvePath(growth["Health"]?.GetValue<string>()),
+                Stamina: GetStatValue(baseStats, "BaseMaximumStamina_+"),
+                StaminaCurve: GetCustomCurveStatReference(growth, "BaseMaximumStamina_+"),
+                Food: GetStatValue(baseStats, "BaseMaximumFood_+"),
+                Water: GetStatValue(baseStats, "BaseMaximumWater_+"),
+                Oxygen: GetStatValue(baseStats, "BaseMaximumOxygen_+"));
+        }
+
+        return statsByAiSetup;
+    }
+
+    private static JsonArray? LoadDataRows(string fileName)
+    {
+        foreach (string dataPath in GetDataFilePaths(fileName))
+        {
+            if (!File.Exists(dataPath))
+            {
+                continue;
+            }
+
+            try
+            {
+                JsonNode? node = JsonNode.Parse(File.ReadAllText(dataPath));
+                if (node?["Rows"] is JsonArray rows)
+                {
+                    return rows;
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyDictionary<string, CreatureCurve> LoadAiCurveValues()
+    {
+        Dictionary<string, CreatureCurve> values = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string dataPath in GetDataFilePaths(AiCurvesDataFileName))
+        {
+            if (!File.Exists(dataPath))
+            {
+                continue;
+            }
+
+            try
+            {
+                JsonNode? node = JsonNode.Parse(File.ReadAllText(dataPath));
+                if (node is not JsonObject curves)
+                {
+                    continue;
+                }
+
+                foreach (KeyValuePair<string, JsonNode?> curve in curves)
+                {
+                    if (curve.Value is JsonValue value && value.TryGetValue(out double number))
+                    {
+                        values[curve.Key] = new CreatureCurve(number, [new CreatureCurveKey(0, number)]);
+                    }
+                    else if (curve.Value is JsonObject curveObject)
+                    {
+                        double defaultValue = curveObject["DefaultValue"]?.GetValue<double>() ?? 0;
+                        List<CreatureCurveKey> keys = [];
+                        if (curveObject["Keys"] is JsonArray keyArray)
+                        {
+                            foreach (JsonNode? keyNode in keyArray)
+                            {
+                                if (keyNode is not JsonObject keyObject)
+                                {
+                                    continue;
+                                }
+
+                                double time = keyObject["Time"]?.GetValue<double>() ?? 0;
+                                double keyValue = keyObject["Value"]?.GetValue<double>() ?? defaultValue;
+                                keys.Add(new CreatureCurveKey(time, keyValue));
+                            }
+                        }
+
+                        values[curve.Key] = new CreatureCurve(defaultValue, keys);
+                    }
+                }
+
+                return values;
+            }
+            catch (IOException)
+            {
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        return values;
+    }
+
+    private static int? GetStatValue(JsonObject stats, string statName)
+    {
+        foreach (KeyValuePair<string, JsonNode?> stat in stats)
+        {
+            if (!stat.Key.Contains(statName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (stat.Value is JsonValue value && value.TryGetValue(out double number))
+            {
+                return (int)Math.Round(number);
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetCustomCurveStatReference(JsonObject growth, string statName)
+    {
+        if (growth["CustomStats"] is not JsonArray customStats)
+        {
+            return null;
+        }
+
+        foreach (JsonNode? statNode in customStats)
+        {
+            if (statNode is not JsonObject customStat)
+            {
+                continue;
+            }
+
+            string? customStatName = customStat["Stat"]?["Value"]?.GetValue<string>();
+            if (!string.Equals(customStatName, statName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return NormalizeCurvePath(customStat["Curve"]?.GetValue<string>());
+        }
+
+        return null;
+    }
+
+    private static int? GetCurveValue(string? curveReference, int level)
+    {
+        string? curvePath = NormalizeCurvePath(curveReference);
+        if (curvePath is null)
+        {
+            return null;
+        }
+
+        return AiCurveValues.Value.TryGetValue(curvePath, out CreatureCurve? curve) ? curve.Evaluate(level) : null;
+    }
+
+    private static string? NormalizeCurvePath(string? curveReference)
+    {
+        if (string.IsNullOrWhiteSpace(curveReference))
+        {
+            return null;
+        }
+
+        int start = curveReference.IndexOf('\'');
+        int end = curveReference.LastIndexOf('\'');
+        string path = start >= 0 && end > start
+            ? curveReference[(start + 1)..end]
+            : curveReference;
+
+        int lastSlash = path.LastIndexOf('/');
+        int objectSeparator = path.IndexOf('.', lastSlash >= 0 ? lastSlash : 0);
+        if (objectSeparator > 0)
+        {
+            path = path[..objectSeparator];
+        }
+
+        return path;
     }
 
     public static IcarusMounts Load(string path)
@@ -237,9 +703,18 @@ internal sealed class IcarusMounts
 
     private static IEnumerable<string> GetTemplatePaths()
     {
-        yield return System.IO.Path.Combine(AppContext.BaseDirectory, "data", TemplateFileName);
+        foreach (string path in GetDataFilePaths(TemplateFileName))
+        {
+            yield return path;
+        }
+
         yield return System.IO.Path.Combine(AppContext.BaseDirectory, TemplateFileName);
-        yield return System.IO.Path.Combine(Environment.CurrentDirectory, "data", TemplateFileName);
+    }
+
+    private static IEnumerable<string> GetDataFilePaths(string fileName)
+    {
+        yield return System.IO.Path.Combine(AppContext.BaseDirectory, "data", fileName);
+        yield return System.IO.Path.Combine(Environment.CurrentDirectory, "data", fileName);
     }
 
     private string? GetOwnerPlayerId()
@@ -374,6 +849,33 @@ internal sealed class IcarusMounts
 
 internal sealed class IcarusMount
 {
+    private static readonly string[] GeneticValueNames =
+    [
+        "Vitality",
+        "Endurance",
+        "Muscle",
+        "Agility",
+        "Toughness",
+        "Hardiness",
+        "Utility"
+    ];
+
+    private static readonly string[] StarterLineages =
+    [
+        "Wild",
+        "Brave",
+        "Careful",
+        "Timid",
+        "Bold",
+        "Hardy",
+        "Stout",
+        "Ambitious",
+        "Resolute",
+        "Fierce",
+        "Savage",
+        "Alpha"
+    ];
+
     public IcarusMount(int index, JsonObject root, List<UePropertyTag> properties)
     {
         Index = index;
@@ -406,6 +908,7 @@ internal sealed class IcarusMount
     }
 
     public int MaxLevel => IcarusMounts.GetMaxLevelForType(MountType);
+    public int AppearanceVariationCount => IcarusMounts.GetAppearanceVariationCountForType(MountType);
 
     public string MountType => Root["MountType"]?.GetValue<string>() ?? "Unknown";
     public string CreatureKind => GetCreatureKind(MountType);
@@ -638,10 +1141,54 @@ internal sealed class IcarusMount
         }
         SetStringProperty("OwnerName", "", "StrProperty");
         SetIntProperty("IcarusActorGUID", actorId);
+        ResetInjectedCreatureState(definition);
+    }
+
+    private void ResetInjectedCreatureState(MountInjectionDefinition definition)
+    {
         ClearStructArray("Talents");
         ClearStructArray("Modifiers");
         ClearStructArray("StomachContents");
+        ClearStructArray("SavedInventories");
+
         Level = 0;
+        SetLineage(StarterLineages[Random.Shared.Next(StarterLineages.Length)]);
+        SetVariation(1);
+        SetUniqueVariation(0);
+        SetCosmeticSkinIndex(0);
+        SetAlternateCosmeticSkinIndex(-1);
+        ApplyStarterStats(definition);
+        RandomizeStarterGenetics();
+    }
+
+    private void ApplyStarterStats(MountInjectionDefinition definition)
+    {
+        CreatureStarterStats defaults = IcarusMounts.GetStarterStats(definition, Level);
+        ApplyStats(defaults);
+    }
+
+    public void ApplyGameDerivedStats()
+    {
+        CreatureStarterStats defaults = IcarusMounts.GetStarterStats(MountType, AiSetupRowName, Level);
+        ApplyStats(defaults);
+    }
+
+    private void ApplyStats(CreatureStarterStats defaults)
+    {
+        SetCurrentHealth(defaults.Health ?? 0);
+        SetStamina(defaults.Stamina ?? 0);
+        SetFoodLevel(defaults.Food ?? 0);
+        SetWaterLevel(defaults.Water ?? 0);
+        SetOxygenLevel(defaults.Oxygen ?? 0);
+    }
+
+    private void RandomizeStarterGenetics()
+    {
+        ClearStructArray("Genetics");
+        foreach (string name in GeneticValueNames)
+        {
+            SetGeneticLevel(name, Random.Shared.Next(2, 7));
+        }
     }
 
     public IReadOnlyList<CreatureGeneticEntry> Genetics

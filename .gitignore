@@ -6,3 +6,6 @@ artifacts/
 .vs/
 AGENTS.md
 agents.md
+*.pak
+__pycache__/
+*.py[cod]

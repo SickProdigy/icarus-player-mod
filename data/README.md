@@ -1,11 +1,33 @@
 # ICARUS Data Tables
 
-Bundled talent catalog files:
+Bundled extracted ICARUS data files:
 
+- `D_AICreatureType.json`
+- `D_AICurves.json`
+- `D_AIGrowth.json`
+- `D_AISetup.json`
+- `D_CharacterGrowth.json`
+- `D_GeneticLineages.json`
+- `D_GeneticValues.json`
+- `D_Mounts.json`
+- `D_TalentRanks.json`
 - `D_Talents.json`
 - `D_TalentTrees.json`
-- `D_TalentRanks.json`
+- `D_TamedCreatureModifiers.json`
+- `D_Tames.json`
 
-These files were extracted from the local ICARUS install at `Icarus\Content\Data\data.pak` so the app can provide built-in talent names, trees, and max-rank limits.
+These files were extracted from the local ICARUS install so the app can provide built-in talent names, rank limits, mount variation counts, creature setup rows, growth stats, curve-key-backed health/stamina values, and genetics reference data. The raw `data.pak` and content `.pak` files are intentionally not stored in this repo.
 
-When ICARUS updates, replace these three files with freshly extracted versions and publish a new app release.
+Refresh the bundled tables after ICARUS updates:
+
+```powershell
+python .\tools\extract_icarus_data.py
+python .\tools\extract_icarus_curves.py
+```
+
+To refresh only the creature and mount research tables:
+
+```powershell
+python .\tools\extract_icarus_data.py --table D_Mounts.json --table D_AISetup.json --table D_AIGrowth.json --table D_CharacterGrowth.json --table D_AICreatureType.json --table D_Tames.json --table D_GeneticValues.json --table D_GeneticLineages.json --table D_TamedCreatureModifiers.json
+python .\tools\extract_icarus_curves.py
+```
