@@ -1,6 +1,8 @@
 # Icarus Profile Mod
 
-A small Windows save editor for ICARUS. It finds `Profile.json`, `Characters.json`, and `Mounts.json` under the normal Windows save location, lets you edit supported profile, character, blueprint, pet, farm animal, and station mount values, and creates timestamped backups before it writes changes.
+A small Windows player profile save editor for ICARUS. Use it to boost XP, raise character level, unlock talents and blueprints, edit currencies, manage pets and mounts, add animals, adjust breeds/colors/appearance values, edit genetics, and tune supported creature data without hand-editing JSON.
+
+The app is built for the normal ICARUS local save layout. It can automatically find your player data, open `Profile.json`, `Characters.json`, and `Mounts.json`, then create timestamped backups before saving changes.
 
 Default profile location:
 
