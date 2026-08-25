@@ -12,6 +12,20 @@ Default profile location:
 %LOCALAPPDATA%\Icarus\Saved\PlayerData\<SteamId>\Mounts.json
 ```
 
+## Screenshots
+
+### Profile Resources
+
+![Profile resources tab](assets/screenshots/profile-resources.png)
+
+### Character Talents
+
+![Character talents tab](assets/screenshots/character-talents.png)
+
+### Pet Editor
+
+![Pet editor tab](assets/screenshots/pet-editor.png)
+
 ## Current Features
 
 - Auto-discovers ICARUS player data files in `%LOCALAPPDATA%\Icarus\Saved\PlayerData`.
