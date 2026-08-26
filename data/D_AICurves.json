@@ -2184,5 +2184,523 @@
                 "Value": 120.0
             }
         ]
+    },
+    "/Game/Data/AI/Genetics/C_EggTime": {
+        "DefaultValue": 20.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 20.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Carry": {
+        "DefaultValue": -30.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -30.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Health": {
+        "DefaultValue": -80.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -80.0
+            },
+            {
+                "Time": 3.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Melee": {
+        "DefaultValue": -10.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -10.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Movement": {
+        "DefaultValue": -10.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -10.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_PhysicalResist": {
+        "DefaultValue": -10.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -10.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Slots": {
+        "DefaultValue": -2.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -2.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_Stamina": {
+        "DefaultValue": -80.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -80.0
+            },
+            {
+                "Time": 3.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Genetics/C_G_TemperatureResist": {
+        "DefaultValue": -10.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -10.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Lineage/C_Lineage_Base": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Lineage/C_Lineage_Double": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Lineage/C_Lineage_EveryFiveLevels": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Lineage/C_Lineage_EveryTwoLevels": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/AI/Lineage/C_Lineage_Inverse_Base": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_MountExperienceGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 5.0,
+                "Value": 5000.0
+            },
+            {
+                "Time": 10.0,
+                "Value": 13500.0
+            },
+            {
+                "Time": 15.0,
+                "Value": 27500.0
+            },
+            {
+                "Time": 20.0,
+                "Value": 47000.0
+            },
+            {
+                "Time": 25.0,
+                "Value": 75000.0
+            },
+            {
+                "Time": 30.0,
+                "Value": 140000.0
+            },
+            {
+                "Time": 35.0,
+                "Value": 245000.0
+            },
+            {
+                "Time": 40.0,
+                "Value": 440000.0
+            },
+            {
+                "Time": 45.0,
+                "Value": 710000.0
+            },
+            {
+                "Time": 50.0,
+                "Value": 1150000.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_MountTalentGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PetExperienceGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 5.0,
+                "Value": 10445.990234375
+            },
+            {
+                "Time": 10.0,
+                "Value": 26741.384765625
+            },
+            {
+                "Time": 15.0,
+                "Value": 60166.7421875
+            },
+            {
+                "Time": 20.0,
+                "Value": 126124.578125
+            },
+            {
+                "Time": 25.0,
+                "Value": 250144.9375
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PetTalentGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PlayerAttributeGrowth": {
+        "DefaultValue": -0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": -0.0
+            },
+            {
+                "Time": 1.0,
+                "Value": 1.0
+            },
+            {
+                "Time": 2.0,
+                "Value": 4.0
+            },
+            {
+                "Time": 3.0,
+                "Value": 9.0
+            },
+            {
+                "Time": 4.0,
+                "Value": 16.0
+            },
+            {
+                "Time": 5.0,
+                "Value": 25.0
+            },
+            {
+                "Time": 6.0,
+                "Value": 36.0
+            },
+            {
+                "Time": 7.0,
+                "Value": 49.0
+            },
+            {
+                "Time": 8.0,
+                "Value": 64.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PlayerBlueprintGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 1.0,
+                "Value": 4.0
+            },
+            {
+                "Time": 51.0,
+                "Value": 179.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PlayerExperienceGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 1.0,
+                "Value": 2400.0
+            },
+            {
+                "Time": 2.0,
+                "Value": 8610.0
+            },
+            {
+                "Time": 3.0,
+                "Value": 18730.0
+            },
+            {
+                "Time": 4.0,
+                "Value": 32530.0
+            },
+            {
+                "Time": 5.0,
+                "Value": 48630.0
+            },
+            {
+                "Time": 6.0,
+                "Value": 67830.0
+            },
+            {
+                "Time": 7.0,
+                "Value": 89430.0
+            },
+            {
+                "Time": 8.0,
+                "Value": 111030.0
+            },
+            {
+                "Time": 9.0,
+                "Value": 135030.0
+            },
+            {
+                "Time": 10.0,
+                "Value": 161500.0
+            },
+            {
+                "Time": 15.0,
+                "Value": 326000.0
+            },
+            {
+                "Time": 20.0,
+                "Value": 600000.0
+            },
+            {
+                "Time": 25.0,
+                "Value": 975000.0
+            },
+            {
+                "Time": 30.0,
+                "Value": 1400000.0
+            },
+            {
+                "Time": 35.0,
+                "Value": 1942000.0
+            },
+            {
+                "Time": 40.0,
+                "Value": 2550000.0
+            },
+            {
+                "Time": 45.0,
+                "Value": 3200000.0
+            },
+            {
+                "Time": 50.0,
+                "Value": 3890000.0
+            },
+            {
+                "Time": 51.0,
+                "Value": 4034000.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_PlayerTalentGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_SettlementExperienceGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 2.0,
+                "Value": 1000.0
+            },
+            {
+                "Time": 10.0,
+                "Value": 10445.990234375
+            },
+            {
+                "Time": 20.0,
+                "Value": 26741.384765625
+            },
+            {
+                "Time": 30.0,
+                "Value": 60166.7421875
+            },
+            {
+                "Time": 40.0,
+                "Value": 126124.578125
+            },
+            {
+                "Time": 50.0,
+                "Value": 250144.9375
+            }
+        ]
+    },
+    "/Game/Data/Character/C_SettlementTalentGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
+    },
+    "/Game/Data/Character/C_SleepDuration": {
+        "DefaultValue": 1.6641839692965732e-06,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 1.6641839692965732e-06
+            },
+            {
+                "Time": 100.0,
+                "Value": 101.63483428955078
+            },
+            {
+                "Time": 200.0,
+                "Value": 176.6348419189453
+            },
+            {
+                "Time": 300.0,
+                "Value": 239.1348114013672
+            },
+            {
+                "Time": 400.0,
+                "Value": 300.0
+            },
+            {
+                "Time": 500.0,
+                "Value": 334.149658203125
+            }
+        ]
+    },
+    "/Game/Data/Character/C_SleepEffectiveness": {
+        "DefaultValue": 0.0,
+        "IsConstant": false,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            },
+            {
+                "Time": 100.0,
+                "Value": 50.0
+            },
+            {
+                "Time": 200.0,
+                "Value": 87.5
+            },
+            {
+                "Time": 300.0,
+                "Value": 115.625
+            },
+            {
+                "Time": 400.0,
+                "Value": 136.6999969482422
+            },
+            {
+                "Time": 500.0,
+                "Value": 152.5
+            }
+        ]
+    },
+    "/Game/Data/Character/C_SoloTalentGrowth": {
+        "DefaultValue": 0.0,
+        "IsConstant": true,
+        "Keys": [
+            {
+                "Time": 0.0,
+                "Value": 0.0
+            }
+        ]
     }
 }

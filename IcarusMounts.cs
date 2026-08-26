@@ -37,6 +37,8 @@ internal sealed record CreatureGeneticEntry(string Name, int Value);
 
 internal readonly record struct CreatureStarterStats(int? Health, int? Stamina, int? Food, int? Water, int? Oxygen);
 
+internal sealed record CreatureLineageRoll(string Name, int Weight);
+
 internal sealed record CreatureCurveKey(double Time, double Value);
 
 internal sealed record CreatureCurve(double DefaultValue, IReadOnlyList<CreatureCurveKey> Keys)
@@ -83,6 +85,9 @@ internal sealed class IcarusMounts
     private const string AiGrowthDataFileName = "D_AIGrowth.json";
     private const string AiCurvesDataFileName = "D_AICurves.json";
     private const string MountDataFileName = "D_Mounts.json";
+    private const string GeneticLineagesDataFileName = "D_GeneticLineages.json";
+    private const string MountExperienceCurvePath = "/Game/Data/Character/C_MountExperienceGrowth";
+    private const string PetExperienceCurvePath = "/Game/Data/Character/C_PetExperienceGrowth";
 
     private static readonly IReadOnlyDictionary<string, int> MaxLevelsByType = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
     {
@@ -142,6 +147,7 @@ internal sealed class IcarusMounts
     private static readonly Lazy<IReadOnlyDictionary<string, int>> AppearanceVariationCountsByType = new(LoadAppearanceVariationCounts);
     private static readonly Lazy<IReadOnlyDictionary<string, CreatureStarterStatSource>> StarterStatsByAiSetup = new(LoadStarterStatsByAiSetup);
     private static readonly Lazy<IReadOnlyDictionary<string, CreatureCurve>> AiCurveValues = new(LoadAiCurveValues);
+    private static readonly Lazy<IReadOnlyList<CreatureLineageRoll>> WeightedLineages = new(LoadWeightedLineages);
 
     private sealed record CreatureStarterStatSource(
         string? HealthCurve,
@@ -233,6 +239,87 @@ internal sealed class IcarusMounts
     {
         string normalized = new(mountType.Where(char.IsLetterOrDigit).ToArray());
         return AppearanceVariationCountsByType.Value.TryGetValue(normalized, out int count) ? count : 0;
+    }
+
+    public static string GetRandomStarterLineage()
+    {
+        IReadOnlyList<CreatureLineageRoll> lineages = WeightedLineages.Value;
+        int totalWeight = lineages.Sum(lineage => Math.Max(0, lineage.Weight));
+        if (totalWeight <= 0)
+        {
+            return "Wild";
+        }
+
+        int roll = Random.Shared.Next(totalWeight);
+        foreach (CreatureLineageRoll lineage in lineages)
+        {
+            int weight = Math.Max(0, lineage.Weight);
+            if (roll < weight)
+            {
+                return lineage.Name;
+            }
+
+            roll -= weight;
+        }
+
+        return lineages[^1].Name;
+    }
+
+    public static int GetExperienceForLevel(string creatureKind, int level)
+    {
+        string curvePath = IsPetKind(creatureKind) ? PetExperienceCurvePath : MountExperienceCurvePath;
+        return GetCurveValue(curvePath, level) ?? EstimateFallbackExperienceForLevel(level);
+    }
+
+    public static int GetLevelFromExperience(string creatureKind, int experience, int maxLevel)
+    {
+        int bestLevel = 0;
+        int bestDelta = int.MaxValue;
+        for (int level = 0; level <= maxLevel; level++)
+        {
+            int delta = Math.Abs(GetExperienceForLevel(creatureKind, level) - experience);
+            if (delta < bestDelta)
+            {
+                bestDelta = delta;
+                bestLevel = level;
+            }
+        }
+
+        return bestLevel;
+    }
+
+    private static bool IsPetKind(string creatureKind)
+    {
+        return creatureKind.Contains("Pet", StringComparison.OrdinalIgnoreCase)
+            || creatureKind.Contains("Companion", StringComparison.OrdinalIgnoreCase)
+            || creatureKind.Contains("Farm", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<CreatureLineageRoll> LoadWeightedLineages()
+    {
+        JsonArray? rows = LoadDataRows(GeneticLineagesDataFileName);
+        if (rows is null)
+        {
+            return [new CreatureLineageRoll("Wild", 1)];
+        }
+
+        List<CreatureLineageRoll> lineages = [];
+        foreach (JsonNode? rowNode in rows)
+        {
+            if (rowNode is not JsonObject row)
+            {
+                continue;
+            }
+
+            string? name = row["Name"]?.GetValue<string>();
+            int weight = row["Weighting"]?.GetValue<int>() ?? 0;
+            if (!string.IsNullOrWhiteSpace(name) && weight > 0)
+            {
+                lineages.Add(new CreatureLineageRoll(name, weight));
+            }
+        }
+
+        return lineages.Count > 0 ? lineages : [new CreatureLineageRoll("Wild", 1)];
     }
 
     private static IReadOnlyDictionary<string, int> LoadAppearanceVariationCounts()
@@ -595,6 +682,53 @@ internal sealed class IcarusMounts
         return AiCurveValues.Value.TryGetValue(curvePath, out CreatureCurve? curve) ? curve.Evaluate(level) : null;
     }
 
+    private static int EstimateFallbackExperienceForLevel(int level)
+    {
+        if (level <= 1)
+        {
+            return 0;
+        }
+
+        (int Level, int Xp, int Tangent)[] keypoints =
+        [
+            (10, 13500, 2250),
+            (30, 140000, 17000),
+            (50, 1150000, 88000)
+        ];
+
+        if (level < keypoints[0].Level)
+        {
+            return Math.Max(0, keypoints[0].Xp - (keypoints[0].Level - level) * keypoints[0].Tangent);
+        }
+
+        if (level >= keypoints[^1].Level)
+        {
+            return keypoints[^1].Xp + (level - keypoints[^1].Level) * keypoints[^1].Tangent;
+        }
+
+        for (int i = 0; i < keypoints.Length - 1; i++)
+        {
+            (int l0, int xp0, int t0) = keypoints[i];
+            (int l1, int xp1, int t1) = keypoints[i + 1];
+            if (level < l0 || level >= l1)
+            {
+                continue;
+            }
+
+            double t = (double)(level - l0) / (l1 - l0);
+            double t2 = t * t;
+            double t3 = t2 * t;
+            double h00 = 2 * t3 - 3 * t2 + 1;
+            double h10 = t3 - 2 * t2 + t;
+            double h01 = -2 * t3 + 3 * t2;
+            double h11 = t3 - t2;
+            int span = l1 - l0;
+            return (int)(h00 * xp0 + h10 * t0 * span + h01 * xp1 + h11 * t1 * span);
+        }
+
+        return 0;
+    }
+
     private static string? NormalizeCurvePath(string? curveReference)
     {
         if (string.IsNullOrWhiteSpace(curveReference))
@@ -849,7 +983,7 @@ internal sealed class IcarusMounts
 
 internal sealed class IcarusMount
 {
-    private static readonly string[] GeneticValueNames =
+    public static readonly IReadOnlyList<string> GeneticValueNames =
     [
         "Vitality",
         "Endurance",
@@ -858,22 +992,6 @@ internal sealed class IcarusMount
         "Toughness",
         "Hardiness",
         "Utility"
-    ];
-
-    private static readonly string[] StarterLineages =
-    [
-        "Wild",
-        "Brave",
-        "Careful",
-        "Timid",
-        "Bold",
-        "Hardy",
-        "Stout",
-        "Ambitious",
-        "Resolute",
-        "Fierce",
-        "Savage",
-        "Alpha"
     ];
 
     public IcarusMount(int index, JsonObject root, List<UePropertyTag> properties)
@@ -895,14 +1013,14 @@ internal sealed class IcarusMount
         {
             int jsonLevel = Root["MountLevel"]?.GetValue<int>() ?? 0;
             int actorLevel = GetActorIntVariable("LastLevelAchieved") ?? 0;
-            int experienceLevel = EstimateLevelFromExperience(Experience);
+            int experienceLevel = IcarusMounts.GetLevelFromExperience(CreatureKind, Experience, MaxLevel);
             return Math.Clamp(Math.Max(Math.Max(jsonLevel, actorLevel), experienceLevel), 0, MaxLevel);
         }
         set
         {
             int cappedLevel = Math.Clamp(value, 0, MaxLevel);
             Root["MountLevel"] = cappedLevel;
-            SetIntProperty("Experience", EstimateExperienceForLevel(cappedLevel));
+            SetIntProperty("Experience", IcarusMounts.GetExperienceForLevel(CreatureKind, cappedLevel));
             SetActorIntVariable("LastLevelAchieved", cappedLevel);
         }
     }
@@ -1152,13 +1270,14 @@ internal sealed class IcarusMount
         ClearStructArray("SavedInventories");
 
         Level = 0;
-        SetLineage(StarterLineages[Random.Shared.Next(StarterLineages.Length)]);
+        SetLineage(IcarusMounts.GetRandomStarterLineage());
         SetVariation(1);
         SetUniqueVariation(0);
         SetCosmeticSkinIndex(0);
         SetAlternateCosmeticSkinIndex(-1);
         ApplyStarterStats(definition);
-        RandomizeStarterGenetics();
+        ClearStructArray("Genetics");
+        RandomizeGenetics(2, 6);
     }
 
     private void ApplyStarterStats(MountInjectionDefinition definition)
@@ -1182,12 +1301,13 @@ internal sealed class IcarusMount
         SetOxygenLevel(defaults.Oxygen ?? 0);
     }
 
-    private void RandomizeStarterGenetics()
+    public void RandomizeGenetics(int minimumValue, int maximumValue)
     {
-        ClearStructArray("Genetics");
+        int minimum = Math.Clamp(minimumValue, 0, 10);
+        int maximum = Math.Clamp(maximumValue, minimum, 10);
         foreach (string name in GeneticValueNames)
         {
-            SetGeneticLevel(name, Random.Shared.Next(2, 7));
+            SetGeneticLevel(name, Random.Shared.Next(minimum, maximum + 1));
         }
     }
 
@@ -1694,67 +1814,4 @@ internal sealed class IcarusMount
         return child;
     }
 
-    private int EstimateLevelFromExperience(int experience)
-    {
-        int bestLevel = 0;
-        int bestDelta = int.MaxValue;
-        for (int level = 0; level <= MaxLevel; level++)
-        {
-            int delta = Math.Abs(EstimateExperienceForLevel(level) - experience);
-            if (delta < bestDelta)
-            {
-                bestDelta = delta;
-                bestLevel = level;
-            }
-        }
-
-        return bestLevel;
-    }
-
-    private static int EstimateExperienceForLevel(int level)
-    {
-        if (level <= 1)
-        {
-            return 0;
-        }
-
-        (int Level, int Xp, int Tangent)[] keypoints =
-        [
-            (10, 13500, 2250),
-            (30, 140000, 17000),
-            (50, 1150000, 88000)
-        ];
-
-        if (level < keypoints[0].Level)
-        {
-            return Math.Max(0, keypoints[0].Xp - (keypoints[0].Level - level) * keypoints[0].Tangent);
-        }
-
-        if (level >= keypoints[^1].Level)
-        {
-            return keypoints[^1].Xp + (level - keypoints[^1].Level) * keypoints[^1].Tangent;
-        }
-
-        for (int i = 0; i < keypoints.Length - 1; i++)
-        {
-            (int l0, int xp0, int t0) = keypoints[i];
-            (int l1, int xp1, int t1) = keypoints[i + 1];
-            if (level < l0 || level >= l1)
-            {
-                continue;
-            }
-
-            double t = (double)(level - l0) / (l1 - l0);
-            double t2 = t * t;
-            double t3 = t2 * t;
-            double h00 = 2 * t3 - 3 * t2 + 1;
-            double h10 = t3 - 2 * t2 + t;
-            double h01 = -2 * t3 + 3 * t2;
-            double h11 = t3 - t2;
-            int span = l1 - l0;
-            return (int)(h00 * xp0 + h10 * t0 * span + h01 * xp1 + h11 * t1 * span);
-        }
-
-        return 0;
-    }
 }

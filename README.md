@@ -39,7 +39,8 @@ Default profile location:
 - Supports selected-rank editing, Reset Rank, Max Rank Selected, Max Rank All, and Reset All Ranks where applicable.
 - Limits rank spinner controls to the selected talent max rank so the up arrow cannot exceed known valid ranks.
 - Loads `Mounts.json`, lets you pick a station-stored creature, edit name, selectable lineage, level, game stat values, phenotype variation values, cosmetic skin indexes, genetics, max level, and creature talent ranks.
-- Shows health, stamina, food, water, and oxygen as saved game stat values, with reset/default tools, but treats them as ICARUS-generated values that may be recalculated by the game.
+- Writes level-linked creature XP from decoded `C_MountExperienceGrowth` and `C_PetExperienceGrowth` game curves.
+- Shows health, stamina, food, water, and oxygen as saved game stat values, with reset/baseline tools, but treats them as ICARUS-generated values that may be recalculated by the game.
 - Supports Inject Creature by cloning an existing station creature when available, or by using a bundled station-mount template for empty or newly-created `Mounts.json` files.
 - Can inject supported station mount and companion creature types such as dog, cat, horse, moa, buffalo, tusker, terrenus, zebra, ubi, mammoth, farm animals, wolves, raptors, draven, slinker, and related variants.
 - Creates timestamped backups next to the original file before saving.
@@ -103,11 +104,15 @@ If `Mounts.json` is missing for the selected player data folder, the app asks be
 
 `Inject Creature` adds a generic station creature by cloning an existing station mount entry when one is available. If the file is empty or newly-created, it falls back to the bundled `data\MountTemplate.json`, then patches the selected animal type, AI setup row, blueprint class, name, generated actor/object IDs, owner player ID, level, and editable arrays.
 
-The Stats tab shows saved health, stamina, food, water, and oxygen values, plus `Reset Stats` for restoring the values loaded from `Mounts.json` and `Default Game Stats` for applying decoded baseline values from bundled game data. ICARUS can recalculate these values from level, genetics, lineage, gear, and modifiers when the creature loads, so direct stat edits are not considered reliably persistent.
+Level edits update `MountLevel`, `LastLevelAchieved`, and `Experience`. The XP value is resolved from decoded mount/pet experience curves in bundled game data when available, with a fallback estimate only if those curves cannot be loaded.
+
+The Stats tab shows saved health, stamina, food, water, and oxygen values, plus `Reset Stats` for restoring the values loaded from `Mounts.json` and `Baseline Stats` for applying decoded baseline values from bundled game data. ICARUS can recalculate final values from level, genetics, lineage, gear, and modifiers when the creature loads, so direct stat edits are not considered reliably persistent.
+
+Injected creatures choose starter lineage from the bundled `D_GeneticLineages.json` weighting table, so common `Wild` rolls are more likely than rare lineages such as `Alpha`.
 
 Appearance editing exposes the saved `Variation`, `UniqueVariation`, `CosmeticSkinIndex`, and `CosmeticSkinIndex_0` values. Phenotype support is still experimental because valid ranges and visual names vary by creature type.
 
-Genetics editing uses a compact two-column editor for the seven known saved genetic values: Vitality, Endurance, Muscle, Agility, Toughness, Hardiness, and Utility. Values are clamped from `0..10`.
+Genetics editing uses a compact two-column editor for the seven known saved genetic values: Vitality, Endurance, Muscle, Agility, Toughness, Hardiness, and Utility. Values are clamped from `0..10`. `Randomize Genetics` defaults to a conservative `2..6` range because the exact ICARUS genetics roll distribution is still unproven; an experimental full `1..10` mode is available for testing documented natural genotype bounds.
 
 ## Project Layout
 

@@ -2,8 +2,9 @@
 """Extract AI CurveFloat values from ICARUS content paks.
 
 The data tables reference Unreal CurveFloat assets for creature health,
-stamina, and damage. This script scans the content paks for those curve
-packages and writes a compact JSON lookup table with decoded rich-curve keys.
+stamina, damage, genetics, lineage, and character growth. This script scans
+the content paks for those curve packages and writes a compact JSON lookup
+table with decoded rich-curve keys.
 """
 
 from __future__ import annotations
@@ -18,7 +19,12 @@ DEFAULT_PAKS = Path(
     r"C:\Program Files (x86)\Steam\steamapps\common\Icarus\Icarus\Content\Paks"
 )
 PACKAGE_MAGIC = b"\xc1\x83\x2a\x9e"
-CURVE_PATH_PREFIX = b"/Game/Data/AI/Curves/"
+CURVE_PATH_PREFIXES = (
+    b"/Game/Data/AI/Curves/",
+    b"/Game/Data/AI/Genetics/",
+    b"/Game/Data/AI/Lineage/",
+    b"/Game/Data/Character/",
+)
 
 
 def read_fstring(data: bytes, offset: int) -> tuple[str, int]:
@@ -114,7 +120,14 @@ def parse_package(data: bytes, start: int) -> tuple[str, dict] | None:
             offset += 4
             names.append(name)
 
-        curve_path = next((name for name in names if name.startswith("/Game/Data/AI/Curves/")), None)
+        curve_path = next(
+            (
+                name
+                for name in names
+                if any(name.startswith(prefix.decode("ascii")) for prefix in CURVE_PATH_PREFIXES)
+            ),
+            None,
+        )
         if curve_path is None or "CurveFloat" not in names:
             return None
 
@@ -144,9 +157,15 @@ def extract_curves(paks_dir: Path) -> dict[str, dict]:
         data = pak_path.read_bytes()
         offset = 0
         while True:
-            hit = data.find(CURVE_PATH_PREFIX, offset)
-            if hit == -1:
+            hits = [
+                hit
+                for prefix in CURVE_PATH_PREFIXES
+                if (hit := data.find(prefix, offset)) != -1
+            ]
+            if not hits:
                 break
+
+            hit = min(hits)
 
             package_start = data.rfind(PACKAGE_MAGIC, max(0, hit - 4096), hit)
             if package_start != -1:
@@ -155,14 +174,14 @@ def extract_curves(paks_dir: Path) -> dict[str, dict]:
                     curve_path, value = parsed
                     curves[curve_path] = value
 
-            offset = hit + len(CURVE_PATH_PREFIX)
+            offset = hit + 1
 
     return curves
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Extract constant ICARUS AI CurveFloat values into data/D_AICurves.json."
+        description="Extract ICARUS CurveFloat values into data/D_AICurves.json."
     )
     parser.add_argument("--paks", type=Path, default=DEFAULT_PAKS, help="Path to Content/Paks")
     parser.add_argument("--out", type=Path, default=Path("data/D_AICurves.json"), help="Output JSON file")
