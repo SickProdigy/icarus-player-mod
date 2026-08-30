@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           tag='${{ steps.version.outputs.tag }}'
-          git fetch --tags origin
+          git fetch --force --tags origin
 
           if git rev-parse "$tag^{commit}" >/dev/null 2>&1; then
             echo "Tag $tag already exists; building the release from that tag."
@@ -103,7 +103,7 @@ jobs:
       - name: Create or update release
         shell: bash
         env:
-          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN || github.token }}
           GITEA_API_URL: ${{ github.api_url }}
           REPOSITORY: ${{ github.repository }}
         run: |
