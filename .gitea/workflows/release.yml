@@ -1,0 +1,155 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - IcarusProfileMod.csproj
+      - publish.ps1
+      - "**/*.cs"
+      - data/**
+      - .gitea/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: dotnet-8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read project version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' IcarusProfileMod.csproj | head -n 1)"
+          if [ -z "$version" ]; then
+            echo "Could not read <Version> from IcarusProfileMod.csproj." >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "asset=IcarusProfileMod-v$version-win-x64.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure version tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='${{ steps.version.outputs.tag }}'
+          git fetch --tags origin
+
+          if git rev-parse "$tag^{commit}" >/dev/null 2>&1; then
+            echo "Tag $tag already exists; building the release from that tag."
+            echo "release_ref=$tag" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "gitea-actions"
+          git config user.email "gitea-actions@gitea.rcs1.top"
+          git tag -a "$tag" -m "Icarus Profile Mod $tag" "$GITHUB_SHA"
+          git push origin "$tag"
+          echo "release_ref=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release source
+        shell: bash
+        run: git checkout '${{ steps.tag.outputs.release_ref }}'
+
+      - name: Publish app
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet publish IcarusProfileMod.csproj \
+            -c Release \
+            -r win-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:EnableWindowsTargeting=true \
+            -o artifacts/win-x64
+
+      - name: Package app
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset='${{ steps.version.outputs.asset }}'
+          zip_path="artifacts/$asset"
+          rm -f "$zip_path"
+          (cd artifacts/win-x64 && zip -X -q -r "../$asset" .)
+          echo "ZIP_PATH=$zip_path" >> "$GITHUB_ENV"
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          version='${{ steps.version.outputs.version }}'
+          cat > release-notes.md <<EOF
+          Windows x64 self-contained build for Icarus Profile Mod v$version.
+
+          Download the attached IcarusProfileMod-v$version-win-x64.zip asset and extract it before running IcarusProfileMod.exe. The zip includes the required data folder.
+
+          Built automatically from the version in IcarusProfileMod.csproj.
+          EOF
+
+      - name: Create or update release
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.api_url }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          tag='${{ steps.version.outputs.tag }}'
+          asset='${{ steps.version.outputs.asset }}'
+          title="Icarus Profile Mod $tag"
+          notes="$(cat release-notes.md)"
+          api_base="$GITEA_API_URL/repos/$REPOSITORY"
+
+          release_json="$(curl -fsS -H "Authorization: token $GITEA_TOKEN" "$api_base/releases/tags/$tag" || true)"
+          if [ -z "$release_json" ]; then
+            release_json="$(jq -n \
+              --arg tag "$tag" \
+              --arg title "$title" \
+              --arg notes "$notes" \
+              '{tag_name:$tag,target_commitish:$tag,name:$title,body:$notes,draft:false,prerelease:false}' |
+              curl -fsS -X POST \
+                -H "Authorization: token $GITEA_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d @- \
+                "$api_base/releases")"
+          else
+            release_id="$(echo "$release_json" | jq -r '.id')"
+            release_json="$(jq -n \
+              --arg title "$title" \
+              --arg notes "$notes" \
+              '{name:$title,body:$notes,draft:false,prerelease:false}' |
+              curl -fsS -X PATCH \
+                -H "Authorization: token $GITEA_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d @- \
+                "$api_base/releases/$release_id")"
+          fi
+
+          release_id="$(echo "$release_json" | jq -r '.id')"
+          assets="$(curl -fsS -H "Authorization: token $GITEA_TOKEN" "$api_base/releases/$release_id/assets")"
+          existing_ids="$(echo "$assets" | jq -r --arg asset "$asset" '.[] | select(.name == $asset) | .id')"
+          for existing_id in $existing_ids; do
+            curl -fsS -X DELETE -H "Authorization: token $GITEA_TOKEN" "$api_base/releases/$release_id/assets/$existing_id" >/dev/null
+          done
+
+          curl -fsS -X POST \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -F "attachment=@$ZIP_PATH" \
+            "$api_base/releases/$release_id/assets?name=$asset" >/dev/null
+
+          echo "Published Gitea release $tag."
