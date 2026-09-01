@@ -170,6 +170,8 @@ The zip should include:
 ```text
 IcarusProfileMod.exe
 IcarusProfileMod.pdb
+LICENSE
+THIRD-PARTY-NOTICES.md
 data\D_TalentRanks.json
 data\D_Talents.json
 data\D_TalentTrees.json
@@ -199,3 +201,11 @@ Close ICARUS before saving changes. Steam Cloud may overwrite local files if the
 Backups are created automatically, but keep an extra copy of `Profile.json`, `Characters.json`, and `Mounts.json` before experimenting with new edits.
 
 The Mounts tab is still newer than the profile and character editors. Test changes with expendable or backed-up saves first, especially injected mounts and creature talents.
+
+## License and Contributions
+
+The original source code, maintenance scripts, and original project assets are licensed under the [GNU General Public License version 3 only](LICENSE). Modified distributions must remain under GPLv3 and provide corresponding source code.
+
+Pull requests are welcome. By submitting a contribution, you agree to license it under GPL-3.0-only. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Extracted ICARUS tables and game-derived material under `data/` are not covered by the project's GPL license. See [data/README.md](data/README.md) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

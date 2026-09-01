@@ -7,6 +7,10 @@ on:
     paths:
       - IcarusProfileMod.csproj
       - publish.ps1
+      - LICENSE
+      - CONTRIBUTING.md
+      - THIRD-PARTY-NOTICES.md
+      - README.md
       - "**/*.cs"
       - data/**
       - .gitea/workflows/release.yml
@@ -77,6 +81,12 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -p:EnableWindowsTargeting=true \
             -o artifacts/win-x64
+
+      - name: Verify legal notices
+        shell: bash
+        run: |
+          test -f artifacts/win-x64/LICENSE
+          test -f artifacts/win-x64/THIRD-PARTY-NOTICES.md
 
       - name: Package app
         shell: bash

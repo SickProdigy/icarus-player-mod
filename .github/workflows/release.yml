@@ -7,6 +7,10 @@ on:
     paths:
       - IcarusProfileMod.csproj
       - publish.ps1
+      - LICENSE
+      - CONTRIBUTING.md
+      - THIRD-PARTY-NOTICES.md
+      - README.md
       - "**/*.cs"
       - data/**
       - .github/workflows/release.yml
@@ -76,6 +80,13 @@ jobs:
         if: steps.tag.outputs.release_enabled == 'true'
         shell: pwsh
         run: .\publish.ps1
+
+      - name: Verify legal notices
+        if: steps.tag.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path -LiteralPath .\artifacts\win-x64\LICENSE)) { throw "Published bundle is missing LICENSE." }
+          if (-not (Test-Path -LiteralPath .\artifacts\win-x64\THIRD-PARTY-NOTICES.md)) { throw "Published bundle is missing THIRD-PARTY-NOTICES.md." }
 
       - name: Package app
         if: steps.tag.outputs.release_enabled == 'true'

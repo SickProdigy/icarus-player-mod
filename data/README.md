@@ -1,5 +1,11 @@
 # ICARUS Data Tables
 
+## Rights and License Boundary
+
+Files extracted or derived from ICARUS are not licensed under the GNU GPL covering the original application code. ICARUS and its data belong to RocketWerkz and/or their respective rights holders; this repository claims and grants no additional rights in them.
+
+The extraction scripts in `tools/` are original GPL-3.0-only project code. Where redistribution is inappropriate or not permitted, generate tables locally from a lawfully installed copy of ICARUS.
+
 Bundled extracted ICARUS data files:
 
 - `D_AICreatureType.json`

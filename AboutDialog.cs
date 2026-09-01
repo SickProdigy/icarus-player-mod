@@ -24,7 +24,7 @@ internal sealed class AboutDialog : Form
         _website = GetMetadata(assembly, "Website") ?? "https://sickgaming.net/";
 
         Text = $"About {product}";
-        ClientSize = new Size(430, 220);
+        ClientSize = new Size(430, 250);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -35,10 +35,11 @@ internal sealed class AboutDialog : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 5,
+            RowCount = 6,
             Padding = new Padding(24)
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -64,6 +65,12 @@ internal sealed class AboutDialog : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         }, 0, 2);
+        layout.Controls.Add(new Label
+        {
+            Text = "License: GNU GPL v3 only",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft
+        }, 0, 3);
 
         LinkLabel websiteLink = new()
         {
@@ -73,7 +80,7 @@ internal sealed class AboutDialog : Form
             LinkBehavior = LinkBehavior.HoverUnderline
         };
         websiteLink.LinkClicked += (_, _) => OpenWebsite();
-        layout.Controls.Add(websiteLink, 0, 3);
+        layout.Controls.Add(websiteLink, 0, 4);
 
         Button closeButton = new()
         {
@@ -82,7 +89,7 @@ internal sealed class AboutDialog : Form
             Anchor = AnchorStyles.Right,
             Width = 90
         };
-        layout.Controls.Add(closeButton, 0, 4);
+        layout.Controls.Add(closeButton, 0, 5);
         AcceptButton = closeButton;
         CancelButton = closeButton;
     }
